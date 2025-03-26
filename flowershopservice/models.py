@@ -138,7 +138,15 @@ class Order(models.Model):
     """
     Модель заказа.
     """
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Букет')
+    # Связь с товаром (может быть null, если товар удален)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Букет')
+    
+    # Дублирующие поля для сохранения исторических данных
+    product_name = models.CharField(max_length=200, verbose_name='Название букета')
+    product_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена букета')
+    product_image = models.CharField(max_length=255, null=True, blank=True, verbose_name='Изображение букета')
+    product_composition = models.TextField(null=True, blank=True, verbose_name='Состав букета')
+    
     user = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
                              related_name='user_orders', verbose_name='Пользователь')
     comment = models.TextField(max_length=300, verbose_name='Комментарий к заказу', null=True, blank=True)
@@ -167,7 +175,7 @@ class Order(models.Model):
     delivery_comments = models.TextField(null=True, blank=True, verbose_name='Комментарии к доставке')
 
     def __str__(self):
-        return f'Заказ {self.product.name} для {self.user.full_name}'
+        return f'Заказ {self.product_name} для {self.user.full_name}'
 
     class Meta:
         verbose_name = "Заказ"
