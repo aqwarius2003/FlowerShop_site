@@ -1,10 +1,14 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from .models import Product, DeliveryTimeSlot
 import datetime
+from django.shortcuts import render, redirect
 
-# Create your views here.
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import ShopUser, Consultation
+import uuid
+
 
 def index(request):
     return render(request, 'index.html')
@@ -87,8 +91,31 @@ def card(request, bouquet_id=None):
     
     return render(request, 'card.html', {'bouquet': bouquet})
 
+@require_POST
 def consultation(request):
-    return render(request, 'consultation.html')
+    name = request.POST.get('fname', '').strip()
+    phone = request.POST.get('tel', '').strip()
+
+    if not name or not phone:
+        return JsonResponse({'success': False, 'error': 'Заполните все поля'})
+
+    try:
+        user, created = ShopUser.objects.get_or_create(
+            phone=phone,
+            defaults={
+                'user_id': str(uuid.uuid4()),
+                'full_name': name,
+                'status': 'user',
+            }
+        )
+        Consultation.objects.create(user=user)
+        return JsonResponse({
+            'success': True,
+            'user_name': name,
+            'user_phone': phone,
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 def order(request):
     # Получаем текущую дату и время
