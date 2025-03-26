@@ -24,17 +24,51 @@ function initForms() {
  * Предотвращает стандартную отправку, проводит валидацию
  * @param {Event} event - Событие отправки формы
  */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function handleFormSubmit(event) {
     event.preventDefault();
     const form = event.target;
-    
-    // Базовая валидация
-    if (!validateForm(form)) {
-        return;
-    }
 
-    // TODO: Здесь будет отправка формы
-    console.log('Форма отправлена:', form.id);
+    if (!validateForm(form)) return;
+
+    if (form.id === 'consultationForm') {
+        const formData = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(
+                    `Спасибо, ${data.user_name}! Менеджер перезвонит на номер ${data.user_phone} в течение 20 минут`,
+                    'success'
+                );
+                form.reset();
+            } else {
+                showMessage(data.error || 'Произошла ошибка', 'error');
+            }
+        })
+        .catch(() => showMessage('Ошибка соединения', 'error'));
+    }
 }
 
 /**

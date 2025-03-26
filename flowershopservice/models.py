@@ -143,7 +143,8 @@ class Order(models.Model):
     
     # Дублирующие поля для сохранения исторических данных
     product_name = models.CharField(max_length=200, verbose_name='Название букета')
-    product_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена букета')
+    product_price = models.DecimalField(max_digits=10, decimal_places=2,
+                                        verbose_name='Цена букета', default=0.0)
     product_image = models.CharField(max_length=255, null=True, blank=True, verbose_name='Изображение букета')
     product_composition = models.TextField(null=True, blank=True, verbose_name='Состав букета')
     
