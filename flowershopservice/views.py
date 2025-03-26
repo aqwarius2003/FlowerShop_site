@@ -125,6 +125,15 @@ def order(request):
     # Специальный слот "Как можно скорее"
     express_slot = DeliveryTimeSlot.objects.filter(is_express=True).first()
     
+    # Проверяем доступность экспресс-слота
+    express_available = False
+    express_message = None
+    if express_slot:
+        # Проверяем время с учетом 30-минутного интервала
+        time_diff = datetime.datetime.combine(datetime.date.today(), express_slot.time_end) - datetime.datetime.combine(datetime.date.today(), current_time)
+        if time_diff.total_seconds() > 1800:  # Более 30 минут до конца слота
+            express_available = True
+    
     # Получаем обычные слоты (не экспресс)
     regular_slots = DeliveryTimeSlot.objects.filter(is_express=False).order_by('time_start')
     
@@ -133,8 +142,6 @@ def order(request):
     tomorrow_slots = []
     
     for slot in regular_slots:
-        # Слот доступен сегодня, если текущее время меньше времени окончания слота
-        # и не слишком близко к времени окончания (мин. 30 минут до конца)
         time_diff = datetime.datetime.combine(datetime.date.today(), slot.time_end) - datetime.datetime.combine(datetime.date.today(), current_time)
         if time_diff.total_seconds() > 1800:  # Более 30 минут до конца слота
             today_slots.append(slot)
@@ -143,13 +150,17 @@ def order(request):
         if slot.is_available_tomorrow:
             tomorrow_slots.append(slot)
     
-    # Для отладки
-    print(f"Express slot: {express_slot}")
-    print(f"Today slots: {today_slots}")
-    print(f"Tomorrow slots: {tomorrow_slots}")
+    # Теперь, после определения today_slots, проверяем условие для сообщения
+    if express_slot and not express_available and len(today_slots) == 0:
+        express_message = (
+            f"Извините, сегодня доставка работает до {express_slot.time_end.strftime('%H:%M')}.<br>"
+            f"Заказы прекращаем принимать за 30 минут до окончания работы.<br>"
+            "Можете заказать доставку на завтра"
+        )
     
     context = {
-        'express_slot': express_slot,
+        'express_slot': express_slot if express_available else None,
+        'express_message': express_message,
         'today_slots': today_slots,
         'tomorrow_slots': tomorrow_slots,
         'current_date': current_date,

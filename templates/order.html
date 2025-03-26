@@ -41,6 +41,10 @@
 									<input type="radio" name="orderTime" id="radio-express" value="express" class="order__form_radio" checked />
 									<label for="radio-express" class="radioLable">{{ express_slot.display_name }}</label>
 								</div>
+								{% elif express_message %}
+								<div class="order__form_subtitle" style="color: #FF6B6B;">
+									{{ express_message|safe }}
+								</div>
 								{% endif %}
 								
 								{% if today_slots %}
