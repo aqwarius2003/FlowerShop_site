@@ -80,13 +80,35 @@ function handleFormSubmit(event) {
 function validateForm(form) {
     let isValid = true;
     const requiredFields = form.querySelectorAll('[required]');
-    
+
     requiredFields.forEach(field => {
         if (!field.value.trim()) {
             isValid = false;
             field.classList.add('error');
         } else {
             field.classList.remove('error');
+        }
+
+        // Проверка для поля имени: должно содержать только буквы
+        if (field.name === 'fname') {
+            const nameRegex = /^[А-Яа-яЁё\s]+$/; // разрешает только буквы и пробелы
+            if (!nameRegex.test(field.value.trim())) {
+                isValid = false;
+                field.classList.add('error');
+            } else {
+                field.classList.remove('error');
+            }
+        }
+
+        // Проверка для поля телефона: должно содержать только цифры и знак "+"
+        if (field.name === 'tel') {
+            const phoneRegex = /^[+]?[0-9\s()-]*$/; // разрешает только цифры и знаки
+            if (!phoneRegex.test(field.value.trim())) {
+                isValid = false;
+                field.classList.add('error');
+            } else {
+                field.classList.remove('error');
+            }
         }
     });
 
@@ -123,10 +145,10 @@ function showMessage(message, type = 'success') {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message message-${type}`;
     messageDiv.textContent = message;
-    
+
     document.body.appendChild(messageDiv);
-    
+
     setTimeout(() => {
         messageDiv.remove();
     }, 3000);
-} 
+}
