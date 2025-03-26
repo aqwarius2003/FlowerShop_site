@@ -1,7 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from .models import Product
+from .models import Product, DeliveryTimeSlot
+import datetime
 
 # Create your views here.
 
@@ -90,9 +91,103 @@ def consultation(request):
     return render(request, 'consultation.html')
 
 def order(request):
-    return render(request, 'order.html')
+    # Получаем текущую дату и время
+    current_date = datetime.date.today()
+    current_time = datetime.datetime.now().time()
+    
+    # Специальный слот "Как можно скорее"
+    express_slot = DeliveryTimeSlot.objects.filter(is_express=True).first()
+    
+    # Получаем обычные слоты (не экспресс)
+    regular_slots = DeliveryTimeSlot.objects.filter(is_express=False).order_by('time_start')
+    
+    # Разделяем слоты на доступные сегодня и завтра
+    today_slots = []
+    tomorrow_slots = []
+    
+    for slot in regular_slots:
+        # Слот доступен сегодня, если текущее время меньше времени окончания слота
+        # и не слишком близко к времени окончания (мин. 30 минут до конца)
+        time_diff = datetime.datetime.combine(datetime.date.today(), slot.time_end) - datetime.datetime.combine(datetime.date.today(), current_time)
+        if time_diff.total_seconds() > 1800:  # Более 30 минут до конца слота
+            today_slots.append(slot)
+            
+        # Если слот доступен для доставки завтра
+        if slot.is_available_tomorrow:
+            tomorrow_slots.append(slot)
+    
+    # Для отладки
+    print(f"Express slot: {express_slot}")
+    print(f"Today slots: {today_slots}")
+    print(f"Tomorrow slots: {tomorrow_slots}")
+    
+    context = {
+        'express_slot': express_slot,
+        'today_slots': today_slots,
+        'tomorrow_slots': tomorrow_slots,
+        'current_date': current_date,
+        'tomorrow_date': current_date + datetime.timedelta(days=1)
+    }
+    
+    return render(request, 'order.html', context)
 
 def order_step(request):
+    if request.method == 'GET':
+        # Получаем данные из формы
+        order_time = request.GET.get('orderTime', '')
+        
+        # Обрабатываем выбранный слот доставки
+        delivery_date = datetime.date.today()
+        is_express = False
+        delivery_time_from = None
+        delivery_time_to = None
+        
+        if order_time.startswith('express'):
+            # Это экспресс-доставка
+            is_express = True
+            # Если для экспресс-доставки нужно указать время, получаем экспресс-слот
+            try:
+                express_slot = DeliveryTimeSlot.objects.filter(is_express=True).first()
+                if express_slot:
+                    delivery_time_from = express_slot.time_start
+                    delivery_time_to = express_slot.time_end
+            except:
+                pass
+        elif order_time.startswith('today'):
+            # Доставка сегодня
+            _, slot_id = order_time.split('-')
+            slot_id = int(slot_id)
+            # Получаем слот доставки
+            try:
+                time_slot = DeliveryTimeSlot.objects.get(id=slot_id)
+                delivery_time_from = time_slot.time_start
+                delivery_time_to = time_slot.time_end
+            except DeliveryTimeSlot.DoesNotExist:
+                pass
+        elif order_time.startswith('tomorrow'):
+            # Доставка завтра
+            delivery_date = datetime.date.today() + datetime.timedelta(days=1)
+            _, slot_id = order_time.split('-')
+            slot_id = int(slot_id)
+            # Получаем слот доставки
+            try:
+                time_slot = DeliveryTimeSlot.objects.get(id=slot_id)
+                delivery_time_from = time_slot.time_start
+                delivery_time_to = time_slot.time_end
+            except DeliveryTimeSlot.DoesNotExist:
+                pass
+        
+        # Сохраняем информацию в сессии для последующего создания заказа
+        request.session['order_data'] = {
+            'name': request.GET.get('fname', ''),
+            'phone': request.GET.get('tel', ''),
+            'address': request.GET.get('adres', ''),
+            'delivery_date': delivery_date.isoformat(),
+            'is_express': is_express,
+            'delivery_time_from': delivery_time_from.strftime('%H:%M:%S') if delivery_time_from else None,
+            'delivery_time_to': delivery_time_to.strftime('%H:%M:%S') if delivery_time_to else None
+        }
+        
     return render(request, 'order-step.html')
 
 def order_complete(request):

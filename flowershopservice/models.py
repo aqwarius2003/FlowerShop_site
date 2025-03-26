@@ -1,5 +1,6 @@
 from django.db import models
 from phone_field import PhoneField
+import datetime
 
 
 class ShopUser(models.Model):
@@ -104,22 +105,33 @@ class DeliveryTimeSlot(models.Model):
     """
     Модель временных слотов доставки
     """
-    date = models.DateField(verbose_name='Дата доставки')
     time_start = models.TimeField(verbose_name='Время начала')
     time_end = models.TimeField(verbose_name='Время окончания')
-    max_deliveries = models.PositiveIntegerField(verbose_name='Максимум доставок в слот')
-    current_deliveries = models.PositiveIntegerField(default=0, verbose_name='Текущее количество доставок')
-
+    display_name = models.CharField(max_length=100, blank=True, verbose_name='Название слота на сайте')
+    is_available_tomorrow = models.BooleanField(default=True, verbose_name='Доступен для доставки на завтра')
+    is_express = models.BooleanField(default=False, verbose_name='"Как можно скорее"')
+    
     class Meta:
         verbose_name = "Слот доставки"
         verbose_name_plural = "Слоты доставки"
-        ordering = ['date', 'time_start']
+        ordering = ['time_start']
 
     def __str__(self):
-        return f"{self.date} {self.time_start}-{self.time_end}"
-
-    def is_available(self):
-        return self.current_deliveries < self.max_deliveries
+        if self.display_name:
+            return self.display_name
+        return f"с {self.time_start.strftime('%H:%M')} до {self.time_end.strftime('%H:%M')}"
+    
+    def save(self, *args, **kwargs):
+        # Автоматически генерируем название слота, если оно не задано
+        if not self.display_name:
+            self.display_name = f"с {self.time_start.strftime('%H:%M')} до {self.time_end.strftime('%H:%M')}"
+        super().save(*args, **kwargs)
+    
+    def is_available_today(self):
+        """Проверяет, доступен ли слот на сегодня (не истек)"""
+        now = datetime.datetime.now().time()
+        # Если текущее время меньше времени окончания слота, то слот доступен
+        return now < self.time_end
 
 
 class Order(models.Model):
@@ -131,8 +143,14 @@ class Order(models.Model):
                              related_name='user_orders', verbose_name='Пользователь')
     comment = models.TextField(max_length=300, verbose_name='Комментарий к заказу', null=True, blank=True)
     delivery_address = models.CharField(max_length=200, verbose_name='Адрес доставки')
-    delivery_time_slot = models.ForeignKey(DeliveryTimeSlot, on_delete=models.SET_NULL, 
-                                         null=True, verbose_name='Слот доставки')
+    
+    # Поля для доставки
+    delivery_date = models.DateField(verbose_name='Дата доставки', null=True)
+    is_express_delivery = models.BooleanField(default=False, verbose_name='Доставка как можно скорее')
+    delivery_time_from = models.TimeField(verbose_name='Доставка с', null=True, blank=True)
+    delivery_time_to = models.TimeField(verbose_name='Доставка до', null=True, blank=True)
+    actual_delivery_time = models.DateTimeField(verbose_name='Фактическое время доставки', null=True, blank=True)
+    
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата и время создания заказа')
     STATUS_CHOICES = [
         ('created', 'Создан'),
@@ -154,6 +172,34 @@ class Order(models.Model):
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
+
+
+# Черновик модели для менеджмента доставки
+class DeliveryManagement(models.Model):
+    """
+    Модель для управления доставщиками и их графиком
+    """
+    delivery_person = models.ForeignKey(ShopUser, on_delete=models.CASCADE, 
+                                      related_name='delivery_schedule', 
+                                      verbose_name='Доставщик')
+    working_date = models.DateField(verbose_name='Рабочий день')
+    shift_start = models.TimeField(verbose_name='Начало смены')
+    shift_end = models.TimeField(verbose_name='Конец смены')
+    max_orders_per_day = models.PositiveIntegerField(default=10, verbose_name='Максимум заказов в день')
+    current_orders_count = models.PositiveIntegerField(default=0, verbose_name='Текущее количество заказов')
+    is_available = models.BooleanField(default=True, verbose_name='Доступен для назначения')
+    
+    class Meta:
+        verbose_name = "График доставщика"
+        verbose_name_plural = "Графики доставщиков"
+        unique_together = ['delivery_person', 'working_date']
+    
+    def __str__(self):
+        return f"{self.delivery_person.full_name} на {self.working_date}"
+    
+    def has_capacity(self):
+        """Проверяет, может ли доставщик взять еще заказы"""
+        return self.current_orders_count < self.max_orders_per_day and self.is_available
 
 
 class Consultation(models.Model):

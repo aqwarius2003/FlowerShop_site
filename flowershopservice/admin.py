@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, Order, Consultation
+from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, Order, Consultation, DeliveryManagement
 
 @admin.register(ShopUser)
 class ShopUserAdmin(admin.ModelAdmin):
@@ -25,16 +25,46 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(DeliveryTimeSlot)
 class DeliveryTimeSlotAdmin(admin.ModelAdmin):
-    list_display = ['date', 'time_start', 'time_end', 'max_deliveries', 'current_deliveries']
-    list_filter = ['date']
+    list_display = ['time_start', 'time_end', 'display_name', 'is_express', 'is_available_tomorrow']
+    list_filter = ['is_express', 'is_available_tomorrow']
+    list_editable = ['display_name', 'is_available_tomorrow']
+    
+    def get_fieldsets(self, request, obj=None):
+        return [
+            (None, {
+                'fields': ('time_start', 'time_end', 'display_name')
+            }),
+            ('Настройки доступности', {
+                'fields': ('is_express', 'is_available_tomorrow')
+            })
+        ]
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['product', 'user', 'status', 'creation_date']
-    list_filter = ['status', 'creation_date']
-    search_fields = ['user__full_name', 'delivery_address']
+    list_display = ['product', 'user', 'status', 'delivery_date', 'is_express_delivery', 'creation_date']
+    list_filter = ['status', 'delivery_date', 'is_express_delivery', 'creation_date']
+    search_fields = ['user__full_name', 'delivery_address', 'product__name']
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('product', 'user', 'comment', 'status')
+        }),
+        ('Информация о доставке', {
+            'fields': ('delivery_address', 'delivery_date', 'is_express_delivery', 
+                      'delivery_time_from', 'delivery_time_to', 'actual_delivery_time')
+        }),
+        ('Исполнители', {
+            'fields': ('manager', 'delivery_person', 'delivery_comments')
+        }),
+    )
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):
     list_display = ['user', 'creation_date', 'processed']
     list_filter = ['processed', 'creation_date']
+
+@admin.register(DeliveryManagement)
+class DeliveryManagementAdmin(admin.ModelAdmin):
+    list_display = ['delivery_person', 'working_date', 'shift_start', 'shift_end', 'is_available', 'current_orders_count', 'max_orders_per_day']
+    list_filter = ['working_date', 'is_available', 'delivery_person']
+    search_fields = ['delivery_person__full_name']
