@@ -1,12 +1,15 @@
-/*@font-face {
-    font-family: 'Unbounded';
-    src: local('Unbounded Bold'), local('Unbounded-Bold'),
-        url('font/Unbounded-Bold.woff2') format('woff2'),
-        url('font/Unbounded-Bold.woff') format('woff'),
-        url('font/Unbounded-Bold.ttf') format('truetype');
-    font-weight: 700;
-    font-style: normal;
-}*/
+/*CSS для подсветки ошибок */
+input.error {
+    border: 2px solid #ff4444 !important;
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+}
+
 * {
 	margin: 0;
 	padding: 0;
