@@ -29,7 +29,8 @@
 				<div class="order__block">
 					<div class="order_items">
 						<div class="title">Оплата</div>
-						<form action="{% url 'order_complete' %}" class="order__form orderStep_form">
+						<form method="POST" action="{% url 'order_complete' %}" class="order__form orderStep_form">
+							{% csrf_token %}
 							<div class="order__form_block">
 								<div class="order__form_items">
 									<div class="order__form_intro">номер карты</div>
@@ -77,5 +78,58 @@
 			</div>
 		</div>
 	</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для показа уведомления
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            border-radius: 4px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        // Удаляем уведомление через 5 секунд
+        setTimeout(() => {
+            notification.remove();
+            // Перенаправляем на главную
+            window.location.href = '{% url "index" %}';
+        }, 5000);
+    }
+
+    // Обработчик отправки формы
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch('{% url "process_order" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message);
+            } else {
+                showNotification('Произошла ошибка при оформлении заказа');
+            }
+        })
+        .catch(error => {
+            showNotification('Произошла ошибка при оформлении заказа');
+        });
+    });
+});
+</script>
 </body>
 </html>

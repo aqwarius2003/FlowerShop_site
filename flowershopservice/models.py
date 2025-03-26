@@ -1,6 +1,7 @@
 from django.db import models
 from phone_field import PhoneField
 import datetime
+from django.utils.html import mark_safe
 
 
 class ShopUser(models.Model):
@@ -96,6 +97,16 @@ class Product(models.Model):
     is_featured = models.BooleanField(default=False, verbose_name='Показывать на главной')
     is_bestseller = models.BooleanField(default=False, verbose_name='Хит продаж')
 
+    def __str__(self):
+        return self.name
+
+    def admin_image_preview(self):
+        if self.image:
+            return mark_safe(f'<img src="{self.image.url}" width="50" height="50" style="object-fit: cover;" />')
+        return "Нет изображения"
+    
+    admin_image_preview.short_description = 'Превью'
+
     class Meta:
         verbose_name = "Букет"
         verbose_name_plural = "Букеты"
@@ -155,12 +166,18 @@ class Order(models.Model):
     
     # Поля для доставки
     delivery_date = models.DateField(verbose_name='Дата доставки', null=True)
-    is_express_delivery = models.BooleanField(default=False, verbose_name='Доставка как можно скорее')
+    is_express_delivery = models.BooleanField(
+        default=False, 
+        verbose_name='Экспресс-доставка'
+    )
     delivery_time_from = models.TimeField(verbose_name='Доставка с', null=True, blank=True)
     delivery_time_to = models.TimeField(verbose_name='Доставка до', null=True, blank=True)
     actual_delivery_time = models.DateTimeField(verbose_name='Фактическое время доставки', null=True, blank=True)
     
-    creation_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата и время создания заказа')
+    creation_date = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name='Создан'
+    )
     STATUS_CHOICES = [
         ('created', 'Создан'),
         ('inWork', 'В работе'),

@@ -16,4 +16,5 @@ urlpatterns = [
     path('quiz-step/', views.quiz_step, name='quiz_step'),
     path('result/', views.result, name='result'),
     path('privacy/', views.privacy, name='privacy'),
+    path('process-order/', views.process_order, name='process_order'),
 ]

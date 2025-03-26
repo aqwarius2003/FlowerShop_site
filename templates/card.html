@@ -98,7 +98,7 @@
 	<!-- JavaScript для кнопки заказа -->
 	<script>
 		document.getElementById('order-button').addEventListener('click', function() {
-			window.location.href = '{% url "order" %}';
+			window.location.href = '{% url "order" %}?bouquet_id={{ bouquet.id }}';
 		});
 	</script>
 </body>

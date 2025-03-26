@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import ShopUser, Consultation
+from .models import ShopUser, Consultation, Order
 import uuid
 
 
@@ -118,6 +118,22 @@ def consultation(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 def order(request):
+    # Получаем ID букета из параметров URL
+    bouquet_id = request.GET.get('bouquet_id')
+    
+    if bouquet_id:
+        # Получаем букет и сохраняем его данные в сессии
+        try:
+            bouquet = Product.objects.get(id=bouquet_id)
+            request.session['bouquet_data'] = {
+                'id': bouquet.id,
+                'name': bouquet.name,
+                'price': str(bouquet.price),
+                'composition': bouquet.composition
+            }
+        except Product.DoesNotExist:
+            pass
+
     # Получаем текущую дату и время
     current_date = datetime.date.today()
     current_time = datetime.datetime.now().time()
@@ -254,3 +270,67 @@ def result(request):
 def privacy(request):
     # Создайте шаблон privacy.html или перенаправляйте куда-то
     return render(request, 'privacy.html')
+
+def process_order(request):
+    if request.method == 'POST':
+        # Получаем данные заказа и букета из сессии
+        order_data = request.session.get('order_data', {})
+        bouquet_data = request.session.get('bouquet_data', {})
+        
+        if not order_data:
+            return JsonResponse({'success': False, 'error': 'Данные заказа не найдены'})
+        
+        if not bouquet_data:
+            return JsonResponse({'success': False, 'error': 'Данные букета не найдены'})
+        
+        try:
+            # Получаем букет
+            bouquet = Product.objects.get(id=bouquet_data['id'])
+            
+            # Создаем или получаем пользователя
+            user, created = ShopUser.objects.get_or_create(
+                phone=order_data['phone'],
+                defaults={
+                    'user_id': str(uuid.uuid4()),
+                    'full_name': order_data['name'],
+                    'status': 'user',
+                    'address': order_data['address']
+                }
+            )
+
+            # Создаем заказ с информацией о букете
+            order = Order.objects.create(
+                user=user,
+                product=bouquet,
+                product_name=bouquet.name,
+                product_price=bouquet.price,
+                product_composition=bouquet.composition,
+                delivery_address=order_data['address'],
+                delivery_date=datetime.datetime.strptime(order_data['delivery_date'], '%Y-%m-%d').date(),
+                is_express_delivery=order_data['is_express'],
+                status='created'
+            )
+
+            # Добавляем время доставки, если оно есть
+            if order_data['delivery_time_from']:
+                order.delivery_time_from = datetime.datetime.strptime(
+                    order_data['delivery_time_from'], '%H:%M:%S').time()
+            if order_data['delivery_time_to']:
+                order.delivery_time_to = datetime.datetime.strptime(
+                    order_data['delivery_time_to'], '%H:%M:%S').time()
+            
+            order.save()
+
+            # Очищаем данные из сессии
+            del request.session['order_data']
+            del request.session['bouquet_data']
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Мы свяжемся с Вами в ближайшее время для уточнения заказа'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
