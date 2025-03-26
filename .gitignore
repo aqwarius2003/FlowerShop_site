@@ -151,3 +151,6 @@ cython_debug/
 *.swp
 *.swo
 
+flower_img/
+populate_bouquets.py
+raw_base.json

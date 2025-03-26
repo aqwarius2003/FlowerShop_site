@@ -374,22 +374,25 @@ margin-bottom: 30px;
 }
 .card__elems {
 	display: flex;
-	margin-bottom: 30px;
+	margin-top: 30px;
 }
 .card__elems:last-child {
 	margin-bottom: 0;
 }
 .card__elems_intro {
-	font-size: 14px;
-	line-height: 145.02%;
-	color: #000000;
-	margin-right: 52px;
-}
-.card_items_intro {
-	display: block;
-	font-size: 14px;
+	font-weight: 600;
+	font-size: 16px;
 	line-height: 145.02%;
 	color: #ABABAB;
+	min-width: 90px;
+}
+.card_items_intro {
+	font-weight: 400;
+	font-size: 16px;
+	line-height: 145.02%;
+	color: #ABABAB;
+	margin-left: 30px;
+	display: inline-block;
 }
 .card__btn {
 	background: #17CF97;

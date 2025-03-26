@@ -86,7 +86,7 @@ class Product(models.Model):
     composition = models.TextField(verbose_name='Состав букета')
     price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Цена')
     categories = models.ManyToManyField(Category, verbose_name='Категории')
-    image = models.ImageField(upload_to='static/products/', verbose_name='Изображение')
+    image = models.ImageField(upload_to='img/catalog/', verbose_name='Изображение')
     STATUS_CHOICES = [
         ('active', 'Актуальный'),
         ('archived', 'Архивный'),

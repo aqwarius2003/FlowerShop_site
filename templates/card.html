@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Flower Shop</title>
+	<title>{{ bouquet.name }} - Flower Shop</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{% static 'css/main.css' %}">	
 </head>
@@ -27,52 +27,40 @@
 		<div class="container">
 			<div class="card ficb">
 				<div class="card__block card__block_first">
-					<img src="{% static 'img/cardImg.jpg' %}" alt="img" class="card__img">
+					{% if bouquet.image %}
+					<img src="{% static bouquet.image_url %}" alt="{{ bouquet.name }}" class="card__img">
+					{% else %}
+					<img src="{% static 'img/cardImg.jpg' %}" alt="{{ bouquet.name }}" class="card__img">
+					{% endif %}
 				</div>
 				<div class="card__block card__block_sec">
-					<div class="title">Летнее утро</div>
-					<div class="card__block_price">3 600 руб</div>
-					<div class="card__elems ">
+					<div class="title">{{ bouquet.name }}</div>
+					<div class="card__block_price">{{ bouquet.price|floatformat:0 }} руб</div>
+					
+					<!-- Описание букета -->
+					{% if bouquet.description %}
+					<div class="card__elems">
+						<span class="card__elems_intro">Описание</span>
+						<div class="card__items">
+							<span class="card_items_intro">
+								{{ bouquet.description }}
+							</span>
+						</div>
+					</div>
+					{% endif %}
+					
+					<!-- Состав букета -->
+					<div class="card__elems">
 						<span class="card__elems_intro">Состав</span>
 						<div class="card__items">
 							<span class="card_items_intro">
-								Гортензия розовая - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Ветки эквалипта - 5 шт.
-							</span>
-							<span class="card_items_intro">
-								Гипсофила - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Матовая упаковка - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Лента атласная - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Рекомендация по уходу - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Открыточка с вашими пожеланиями - 1 шт.
-							</span>
-							<span class="card_items_intro">
-								Любовь флориста (бесплатно) - 1 шт.
+								{{ bouquet.composition }}
 							</span>
 						</div>
 					</div>
-					<div class="card__elems ">
-						<span class="card__elems_intro">Размер</span>
-						<div class="card__items">
-							<span class="card_items_intro">
-								Высота - 50 см
-							</span>
-							<span class="card_items_intro">
-								Ширина - 30 см
-							</span>
-						</div>
-					</div>
-					<button onclick="location.href='{% url 'order' %}'" class="btn largeBtn card__btn">Заказать букет</button>
+					
+					<!-- Кнопка заказа букета -->
+					<button id="order-button" class="btn largeBtn card__btn">Заказать букет</button>
 				</div>
 			</div>
 		</div>
@@ -106,5 +94,12 @@
 			</div>
 		</div>
 	</footer>
+	
+	<!-- JavaScript для кнопки заказа -->
+	<script>
+		document.getElementById('order-button').addEventListener('click', function() {
+			window.location.href = '{% url "order" %}';
+		});
+	</script>
 </body>
 </html>
