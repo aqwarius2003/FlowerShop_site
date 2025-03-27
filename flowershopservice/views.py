@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from .models import ShopUser, Consultation, Order
 import uuid
 import logging
+from django.utils import timezone  # Добавляем импорт timezone
 
 logger = logging.getLogger(__name__)
 
@@ -400,7 +401,8 @@ def process_order(request):
                 delivery_address=order_data['address'],
                 delivery_date=datetime.datetime.strptime(order_data['delivery_date'], '%Y-%m-%d').date(),
                 is_express_delivery=order_data['is_express'],
-                status='created'
+                status='created',
+                creation_date=timezone.now()  # Явно указываем текущее время с учетом часового пояса
             )
             logger.info(f"Created order with ID: {order.id}")
 

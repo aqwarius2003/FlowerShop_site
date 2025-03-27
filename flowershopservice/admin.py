@@ -3,7 +3,7 @@ from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, O
 from django.utils.html import mark_safe, format_html
 from django.db import models
 from django.utils import timezone
-from datetime import datetime
+from django.utils.formats import date_format
 from django import forms
 from django.core.validators import RegexValidator
 
@@ -118,10 +118,8 @@ class OrderAdmin(admin.ModelAdmin):
         if obj.is_express_delivery:
             return format_html(
                 '<span style="color: red;"><b>СРОЧНЫЙ</b></span><br>'
-                '<small>Создан: {}<br>'
-                'Доставка: {}</small>',
-                obj.creation_date.strftime('%H:%M'),
-                f"{obj.delivery_time_from.strftime('%H:%M')}-{obj.delivery_time_to.strftime('%H:%M')}"
+                '<small>Создан: {}</small>',
+                timezone.localtime(obj.creation_date).strftime('%H:%M')
             )
         return f"{obj.delivery_time_from.strftime('%H:%M')}-{obj.delivery_time_to.strftime('%H:%M')}"
     get_delivery_time.short_description = "Время доставки"
@@ -134,7 +132,8 @@ class OrderAdmin(admin.ModelAdmin):
         'get_phone',
         'get_delivery_time',
         'status',
-        'delivery_date'
+        'delivery_date',
+        'display_creation_date'
     )
     list_display_links = ('get_bouquet_preview', 'product')
     search_fields = (
@@ -174,6 +173,17 @@ class OrderAdmin(admin.ModelAdmin):
 
     # Делаем поле creation_date только для чтения
     readonly_fields = ('creation_date',)
+
+    # Метод для форматирования времени создания с учетом часового пояса
+    def display_creation_date(self, obj):
+        """Отображение даты создания с учетом часового пояса"""
+        if obj.creation_date:
+            # Преобразуем время UTC в локальное время с учетом часового пояса из settings.py
+            local_time = timezone.localtime(obj.creation_date)
+            # Форматируем время согласно локализации
+            return date_format(local_time, format='SHORT_DATETIME_FORMAT')
+        return "-"
+    display_creation_date.short_description = "Создан"
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):

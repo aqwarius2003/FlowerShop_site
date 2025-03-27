@@ -2,6 +2,7 @@ from django.db import models
 from phone_field import PhoneField
 import datetime
 from django.utils.html import mark_safe
+from django.utils import timezone
 
 
 class ShopUser(models.Model):
@@ -180,7 +181,7 @@ class Order(models.Model):
     actual_delivery_time = models.DateTimeField(verbose_name='Фактическое время доставки', null=True, blank=True)
     
     creation_date = models.DateTimeField(
-        auto_now_add=True, 
+        default=timezone.now,
         verbose_name='Создан'
     )
     STATUS_CHOICES = [
