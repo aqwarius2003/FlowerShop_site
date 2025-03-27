@@ -4,12 +4,33 @@ from django.utils.html import mark_safe, format_html
 from django.db import models
 from django.utils import timezone
 from datetime import datetime
+from django import forms
+from django.core.validators import RegexValidator
 
 @admin.register(ShopUser)
 class ShopUserAdmin(admin.ModelAdmin):
     list_display = ['full_name', 'phone', 'status']
     list_filter = ['status']
     search_fields = ['full_name', 'phone']
+
+    # Добавляем форму для кастомизации полей
+    class ShopUserAdminForm(forms.ModelForm):
+        phone = forms.CharField(
+            max_length=20,
+            validators=[
+                RegexValidator(
+                    regex=r'^\+?1?\d{9,15}$',
+                    message="Номер телефона должен быть в формате: '+999999999'. До 15 цифр."
+                )
+            ],
+            widget=forms.TextInput(attrs={'placeholder': '+7 (999) 999-99-99'})
+        )
+
+        class Meta:
+            model = ShopUser
+            fields = '__all__'
+
+    form = ShopUserAdminForm
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -27,6 +48,49 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     list_filter = ('status', 'categories', 'is_featured')
     filter_horizontal = ['categories']
+
+    # Настраиваем размеры текстовых полей
+    formfield_overrides = {
+        models.TextField: {'widget': admin.widgets.AdminTextareaWidget(attrs={'rows': 3})},
+    }
+
+    # Добавляем CSS для уменьшения высоты виджета с категориями
+    class Media:
+        css = {
+            'all': (
+                'admin/css/custom.css',
+            )
+        }
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "categories":
+            kwargs['widget'] = admin.widgets.FilteredSelectMultiple(
+                db_field.verbose_name,
+                is_stacked=False,
+            )
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def get_image_preview(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" width="50" height="50" style="object-fit: cover; vertical-align: middle; margin-right: 10px;" />')
+        return "Нет фото"
+    get_image_preview.short_description = 'Текущее фото'
+
+    readonly_fields = ('get_image_preview',)
+
+    fieldsets = (
+        (None, {
+            'fields': (
+                ('name', 'price'),
+                ('get_image_preview', 'image'),  # Добавляем превью рядом с полем загрузки
+                'description',
+                'composition',
+                'categories',
+                ('status', 'is_featured'),
+            ),
+            'classes': ('wide',)
+        }),
+    )
 
 @admin.register(DeliveryTimeSlot)
 class DeliveryTimeSlotAdmin(admin.ModelAdmin):
@@ -110,11 +174,6 @@ class OrderAdmin(admin.ModelAdmin):
 
     # Делаем поле creation_date только для чтения
     readonly_fields = ('creation_date',)
-
-    class Media:
-        css = {
-            'all': ('admin/css/custom.css',)
-        }
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):

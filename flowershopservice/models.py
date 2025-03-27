@@ -8,10 +8,15 @@ class ShopUser(models.Model):
     """
     Модель пользователя магазина.
     """
-    user_id = models.CharField(max_length=20, unique=True, verbose_name='ID Телеграма')
     full_name = models.CharField(max_length=100, verbose_name='ФИО')
     phone = PhoneField(blank=True, help_text='Телефон')
     address = models.CharField(max_length=200, null=True, blank=True, verbose_name='Адрес')
+    telegram_id = models.CharField(
+        'Telegram ID',
+        max_length=50,
+        blank=True,  # Разрешаем пустое значение в форме
+        null=True    # Разрешаем NULL в базе данных
+    )
     STATUS_CHOICES = [
         ('owner', 'Владелец сервиса'),
         ('user', 'Пользователь'),

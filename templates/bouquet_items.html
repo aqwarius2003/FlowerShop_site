@@ -6,7 +6,7 @@
     
     <!-- Блок букета с кликабельным изображением -->
     <div class="recommended__block bouquet-item" 
-         {% if bouquet.image %}style="background-image: url('{% static bouquet.image_url %}'); background-size: cover; background-position: center center; background-repeat: no-repeat;"{% endif %}>
+         {% if bouquet.image %}style="background-image: url('{{ bouquet.image.url }}'); background-size: cover; background-position: center center; background-repeat: no-repeat;"{% endif %}>
         <!-- Кликабельная ссылка на весь блок -->
         <a href="{% url 'bouquet_detail' bouquet.id %}" class="recommended__block_img_link">
             <!-- Информационный блок внизу изображения -->

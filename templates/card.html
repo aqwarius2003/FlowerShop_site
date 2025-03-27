@@ -28,7 +28,7 @@
 			<div class="card ficb">
 				<div class="card__block card__block_first">
 					{% if bouquet.image %}
-					<img src="{% static bouquet.image_url %}" alt="{{ bouquet.name }}" class="card__img">
+					<img src="{{ bouquet.image.url }}" alt="{{ bouquet.name }}" class="card__img">
 					{% else %}
 					<img src="{% static 'img/cardImg.jpg' %}" alt="{{ bouquet.name }}" class="card__img">
 					{% endif %}

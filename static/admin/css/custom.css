@@ -1,0 +1,101 @@
+/* Уменьшаем высоту текстовых полей */
+.field-description textarea,
+.field-composition textarea {
+    max-height: 80px !important;
+    min-height: 80px !important;
+}
+
+/* Делаем виджет категорий компактнее */
+.selector {
+    width: 100% !important;
+    margin-bottom: 10px !important;
+}
+
+.selector-available,
+.selector-chosen {
+    width: 45% !important;
+}
+
+.selector-available h2, 
+.selector-chosen h2 {
+    font-size: 12px !important;
+    padding: 3px !important;
+    margin-bottom: 0 !important;
+}
+
+.selector-available select,
+.selector-chosen select {
+    height: 80px !important;
+    margin: 0 !important;
+}
+
+.selector-chooser {
+    margin: 25px 5px 0 5px !important;
+    width: 22px !important;
+}
+
+.selector-chooser li {
+    margin-bottom: 3px !important;
+}
+
+/* Уменьшаем отступы между полями */
+.form-row {
+    padding: 5px 0 !important;
+}
+
+/* Уменьшаем подсказки */
+.help {
+    font-size: 11px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Уменьшаем пространство вокруг кнопок выбора */
+.selector-filter {
+    width: 100% !important;
+    padding: 2px 0 !important;
+}
+
+.selector-filter input {
+    margin: 0 !important;
+    width: 95% !important;
+}
+
+/* Стили для поля загрузки изображения */
+.field-get_image_preview {
+    padding: 0 !important;
+}
+
+.field-image {
+    display: flex;
+    align-items: center;
+}
+
+.field-get_image_preview img {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Центрирование содержимого в таблице списка */
+#result_list tbody td,
+#result_list tbody th {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Сохраняем левое выравнивание для названия (второй столбец) */
+#result_list tbody td:nth-child(2) {
+    text-align: left !important;
+}
+
+/* Центрируем заголовки столбцов */
+#result_list thead th {
+    text-align: center !important;
+}
+
+/* Исключаем чекбоксы из центрирования */
+#result_list tbody td:first-child,
+#result_list thead th:first-child {
+    text-align: left !important;
+    width: 3em;
+} 
