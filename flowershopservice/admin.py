@@ -1,36 +1,12 @@
 from django.contrib import admin
 from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, Order, Consultation, DeliveryManagement
-from django.utils.html import mark_safe, format_html
-from django.db import models
 from django.utils import timezone
-from django.utils.formats import date_format
-from django import forms
-from django.core.validators import RegexValidator
 
 @admin.register(ShopUser)
 class ShopUserAdmin(admin.ModelAdmin):
     list_display = ['full_name', 'phone', 'status']
     list_filter = ['status']
     search_fields = ['full_name', 'phone']
-
-    # Добавляем форму для кастомизации полей
-    class ShopUserAdminForm(forms.ModelForm):
-        phone = forms.CharField(
-            max_length=20,
-            validators=[
-                RegexValidator(
-                    regex=r'^\+?1?\d{9,15}$',
-                    message="Номер телефона должен быть в формате: '+999999999'. До 15 цифр."
-                )
-            ],
-            widget=forms.TextInput(attrs={'placeholder': '+7 (999) 999-99-99'})
-        )
-
-        class Meta:
-            model = ShopUser
-            fields = '__all__'
-
-    form = ShopUserAdminForm
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -43,54 +19,10 @@ class PriceRangeAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('admin_image_preview', 'name', 'price', 'status')
-    list_display_links = ('admin_image_preview', 'name')
-    search_fields = ('name', 'description')
-    list_filter = ('status', 'categories', 'is_featured')
+    list_display = ['name', 'price', 'status']
+    list_filter = ['status', 'categories']
+    search_fields = ['name', 'description']
     filter_horizontal = ['categories']
-
-    # Настраиваем размеры текстовых полей
-    formfield_overrides = {
-        models.TextField: {'widget': admin.widgets.AdminTextareaWidget(attrs={'rows': 3})},
-    }
-
-    # Добавляем CSS для уменьшения высоты виджета с категориями
-    class Media:
-        css = {
-            'all': (
-                'admin/css/custom.css',
-            )
-        }
-
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == "categories":
-            kwargs['widget'] = admin.widgets.FilteredSelectMultiple(
-                db_field.verbose_name,
-                is_stacked=False,
-            )
-        return super().formfield_for_manytomany(db_field, request, **kwargs)
-
-    def get_image_preview(self, obj):
-        if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" width="50" height="50" style="object-fit: cover; vertical-align: middle; margin-right: 10px;" />')
-        return "Нет фото"
-    get_image_preview.short_description = 'Текущее фото'
-
-    readonly_fields = ('get_image_preview',)
-
-    fieldsets = (
-        (None, {
-            'fields': (
-                ('name', 'price'),
-                ('get_image_preview', 'image'),  # Добавляем превью рядом с полем загрузки
-                'description',
-                'composition',
-                'categories',
-                ('status', 'is_featured'),
-            ),
-            'classes': ('wide',)
-        }),
-    )
 
 @admin.register(DeliveryTimeSlot)
 class DeliveryTimeSlotAdmin(admin.ModelAdmin):
@@ -110,85 +42,42 @@ class DeliveryTimeSlotAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    def get_phone(self, obj):
-        return obj.user.phone if obj.user else '-'
-    get_phone.short_description = 'Телефон'
-
-    def get_delivery_time(self, obj):
-        if obj.is_express_delivery:
-            return format_html(
-                '<span style="color: red;"><b>СРОЧНЫЙ</b></span><br>'
-                '<small>Создан: {}</small>',
-                timezone.localtime(obj.creation_date).strftime('%H:%M')
-            )
-        return f"{obj.delivery_time_from.strftime('%H:%M')}-{obj.delivery_time_to.strftime('%H:%M')}"
-    get_delivery_time.short_description = "Время доставки"
-    get_delivery_time.allow_tags = True
-
-    list_display = (
-        'get_bouquet_preview', 
-        'product',
-        'user',
-        'get_phone',
-        'get_delivery_time',
-        'status',
-        'delivery_date',
-        'display_creation_date'
-    )
-    list_display_links = ('get_bouquet_preview', 'product')
-    search_fields = (
-        'product__name', 
-        'user__full_name', 
-        'user__phone', 
-        'delivery_address'
-    )
-    list_filter = ('status', 'delivery_date', 'is_express_delivery')
-    list_editable = ('status',)
+    list_display = ['product', 'user', 'status', 'delivery_date', 'is_express_delivery', 'creation_date']
+    list_filter = ['status', 'delivery_date', 'is_express_delivery', 'creation_date']
+    search_fields = ['user__full_name', 'delivery_address', 'product__name']
     
-    # Уменьшаем высоту поля комментария
-    formfield_overrides = {
-        models.TextField: {'widget': admin.widgets.AdminTextareaWidget(attrs={'rows': 3})},
-    }
-
-    def get_bouquet_preview(self, obj):
-        if obj.product and obj.product.image:
-            return mark_safe(f'<img src="{obj.product.image.url}" width="50" height="50" style="object-fit: cover;" />')
-        return "Нет фото"
-    get_bouquet_preview.short_description = 'Фото'
-
-    # Настройка полей формы
     fieldsets = (
         ('Основная информация', {
-            'fields': ('product', 'user', 'status', 'creation_date'),
+            'fields': ('product', 'user', 'comment', 'status')
         }),
         ('Информация о доставке', {
-            'fields': ('delivery_date', 'delivery_address', 'is_express_delivery', 
-                      'delivery_time_from', 'delivery_time_to'),
+            'fields': ('delivery_address', 'delivery_date', 'is_express_delivery', 
+                      'delivery_time_from', 'delivery_time_to', 'actual_delivery_time')
         }),
-        ('Комментарии', {
-            'fields': ('comment', 'delivery_comments'),
-            'classes': ('collapse',),  # Делаем секцию сворачиваемой
+        ('Исполнители', {
+            'fields': ('manager', 'delivery_person', 'delivery_comments')
         }),
     )
-
-    # Делаем поле creation_date только для чтения
-    readonly_fields = ('creation_date',)
-
-    # Метод для форматирования времени создания с учетом часового пояса
-    def display_creation_date(self, obj):
-        """Отображение даты создания с учетом часового пояса"""
-        if obj.creation_date:
-            # Преобразуем время UTC в локальное время с учетом часового пояса из settings.py
-            local_time = timezone.localtime(obj.creation_date)
-            # Форматируем время согласно локализации
-            return date_format(local_time, format='SHORT_DATETIME_FORMAT')
-        return "-"
-    display_creation_date.short_description = "Создан"
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'creation_date', 'processed']
+    list_display = ['user', 'get_phone', 'creation_date', 'status_display', 'processed']
     list_filter = ['processed', 'creation_date']
+    ordering = ['creation_date']  # Сортировка от старых к новым
+
+    def get_phone(self, obj):
+        return obj.user.phone
+    get_phone.short_description = 'Телефон'
+
+    def status_display(self, obj):
+        if obj.processed:
+            return 'Обработано'
+        now = timezone.now()
+        delta = now - obj.creation_date
+        if delta.total_seconds() > 20 * 60:  # Проверка на 20 минут
+            return 'Просрочено'
+        return 'Не обработано'
+    status_display.short_description = 'Статус заявки'
 
 @admin.register(DeliveryManagement)
 class DeliveryManagementAdmin(admin.ModelAdmin):

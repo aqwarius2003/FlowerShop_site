@@ -1,23 +1,17 @@
 from django.db import models
 from phone_field import PhoneField
 import datetime
-from django.utils.html import mark_safe
-from django.utils import timezone
 
 
 class ShopUser(models.Model):
     """
     Модель пользователя магазина.
     """
+    user_id = models.CharField(max_length=20, unique=True, verbose_name='ID Телеграма')
     full_name = models.CharField(max_length=100, verbose_name='ФИО')
     phone = PhoneField(blank=True, help_text='Телефон')
-    address = models.CharField(max_length=200, null=True, blank=True, verbose_name='Адрес')
-    telegram_id = models.CharField(
-        'Telegram ID',
-        max_length=50,
-        blank=True,  # Разрешаем пустое значение в форме
-        null=True    # Разрешаем NULL в базе данных
-    )
+    address = models.CharField(max_length=200, null=True, blank=True,
+                               verbose_name='Адрес')
     STATUS_CHOICES = [
         ('owner', 'Владелец сервиса'),
         ('user', 'Пользователь'),
@@ -25,7 +19,8 @@ class ShopUser(models.Model):
         ('manager', 'Менеджер'),
         ('delivery', 'Доставщик'),
     ]
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='user', verbose_name='Статус')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='user',
+                              verbose_name='Статус')
 
     def __str__(self):
         return self.full_name
@@ -54,9 +49,11 @@ class PriceRange(models.Model):
     """
     Модель ценовых категорий
     """
-    min_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+    min_price = models.DecimalField(max_digits=8, decimal_places=2, null=True,
+                                    blank=True,
                                     verbose_name='Минимальная цена')
-    max_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True,
+    max_price = models.DecimalField(max_digits=8, decimal_places=2, null=True,
+                                    blank=True,
                                     verbose_name='Максимальная цена')
 
     def __str__(self):
@@ -75,7 +72,8 @@ class PriceRange(models.Model):
 
     def get_products(self):
         if self.min_price and self.max_price:
-            return Product.objects.filter(price__gte=self.min_price, price__lte=self.max_price)
+            return Product.objects.filter(price__gte=self.min_price,
+                                          price__lte=self.max_price)
         elif self.min_price:
             return Product.objects.filter(price__gte=self.min_price)
         elif self.max_price:
@@ -99,19 +97,11 @@ class Product(models.Model):
         ('active', 'Актуальный'),
         ('archived', 'Архивный'),
     ]
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active', verbose_name='Статус')
-    is_featured = models.BooleanField(default=False, verbose_name='Показывать на главной')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active',
+                              verbose_name='Статус')
+    is_featured = models.BooleanField(default=False,
+                                      verbose_name='Показывать на главной')
     is_bestseller = models.BooleanField(default=False, verbose_name='Хит продаж')
-
-    def __str__(self):
-        return self.name
-
-    def admin_image_preview(self):
-        if self.image:
-            return mark_safe(f'<img src="{self.image.url}" width="50" height="50" style="object-fit: cover;" />')
-        return "Нет изображения"
-    
-    admin_image_preview.short_description = 'Превью'
 
     class Meta:
         verbose_name = "Букет"
@@ -124,10 +114,12 @@ class DeliveryTimeSlot(models.Model):
     """
     time_start = models.TimeField(verbose_name='Время начала')
     time_end = models.TimeField(verbose_name='Время окончания')
-    display_name = models.CharField(max_length=100, blank=True, verbose_name='Название слота на сайте')
-    is_available_tomorrow = models.BooleanField(default=True, verbose_name='Доступен для доставки на завтра')
+    display_name = models.CharField(max_length=100, blank=True,
+                                    verbose_name='Название слота на сайте')
+    is_available_tomorrow = models.BooleanField(default=True,
+                                                verbose_name='Доступен для доставки на завтра')
     is_express = models.BooleanField(default=False, verbose_name='"Как можно скорее"')
-    
+
     class Meta:
         verbose_name = "Слот доставки"
         verbose_name_plural = "Слоты доставки"
@@ -137,13 +129,13 @@ class DeliveryTimeSlot(models.Model):
         if self.display_name:
             return self.display_name
         return f"с {self.time_start.strftime('%H:%M')} до {self.time_end.strftime('%H:%M')}"
-    
+
     def save(self, *args, **kwargs):
         # Автоматически генерируем название слота, если оно не задано
         if not self.display_name:
             self.display_name = f"с {self.time_start.strftime('%H:%M')} до {self.time_end.strftime('%H:%M')}"
         super().save(*args, **kwargs)
-    
+
     def is_available_today(self):
         """Проверяет, доступен ли слот на сегодня (не истек)"""
         now = datetime.datetime.now().time()
@@ -156,34 +148,37 @@ class Order(models.Model):
     Модель заказа.
     """
     # Связь с товаром (может быть null, если товар удален)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Букет')
-    
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True,
+                                blank=True, verbose_name='Букет')
+
     # Дублирующие поля для сохранения исторических данных
     product_name = models.CharField(max_length=200, verbose_name='Название букета')
     product_price = models.DecimalField(max_digits=10, decimal_places=2,
                                         verbose_name='Цена букета', default=0.0)
-    product_image = models.CharField(max_length=255, null=True, blank=True, verbose_name='Изображение букета')
-    product_composition = models.TextField(null=True, blank=True, verbose_name='Состав букета')
-    
+    product_image = models.CharField(max_length=255, null=True, blank=True,
+                                     verbose_name='Изображение букета')
+    product_composition = models.TextField(null=True, blank=True,
+                                           verbose_name='Состав букета')
+
     user = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
                              related_name='user_orders', verbose_name='Пользователь')
-    comment = models.TextField(max_length=300, verbose_name='Комментарий к заказу', null=True, blank=True)
+    comment = models.TextField(max_length=300, verbose_name='Комментарий к заказу',
+                               null=True, blank=True)
     delivery_address = models.CharField(max_length=200, verbose_name='Адрес доставки')
-    
+
     # Поля для доставки
     delivery_date = models.DateField(verbose_name='Дата доставки', null=True)
-    is_express_delivery = models.BooleanField(
-        default=False, 
-        verbose_name='Экспресс-доставка'
-    )
-    delivery_time_from = models.TimeField(verbose_name='Доставка с', null=True, blank=True)
-    delivery_time_to = models.TimeField(verbose_name='Доставка до', null=True, blank=True)
-    actual_delivery_time = models.DateTimeField(verbose_name='Фактическое время доставки', null=True, blank=True)
-    
-    creation_date = models.DateTimeField(
-        default=timezone.now,
-        verbose_name='Создан'
-    )
+    is_express_delivery = models.BooleanField(default=False,
+                                              verbose_name='Доставка как можно скорее')
+    delivery_time_from = models.TimeField(verbose_name='Доставка с', null=True,
+                                          blank=True)
+    delivery_time_to = models.TimeField(verbose_name='Доставка до', null=True,
+                                        blank=True)
+    actual_delivery_time = models.DateTimeField(
+        verbose_name='Фактическое время доставки', null=True, blank=True)
+
+    creation_date = models.DateTimeField(auto_now_add=True,
+                                         verbose_name='Дата и время создания заказа')
     STATUS_CHOICES = [
         ('created', 'Создан'),
         ('inWork', 'В работе'),
@@ -191,12 +186,16 @@ class Order(models.Model):
         ('delivered', 'Выдан клиенту'),
         ('cancelled', 'Отменен'),
     ]
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='created', verbose_name='Статус заказа')
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='created',
+                              verbose_name='Статус заказа')
     manager = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
-                                related_name='managed_orders', null=True, blank=True, verbose_name='Менеджер')
+                                related_name='managed_orders', null=True, blank=True,
+                                verbose_name='Менеджер')
     delivery_person = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
-                                        related_name='delivery_orders', null=True, blank=True, verbose_name='Доставщик')
-    delivery_comments = models.TextField(null=True, blank=True, verbose_name='Комментарии к доставке')
+                                        related_name='delivery_orders', null=True,
+                                        blank=True, verbose_name='Доставщик')
+    delivery_comments = models.TextField(null=True, blank=True,
+                                         verbose_name='Комментарии к доставке')
 
     def __str__(self):
         return f'Заказ {self.product_name} для {self.user.full_name}'
@@ -211,24 +210,27 @@ class DeliveryManagement(models.Model):
     """
     Модель для управления доставщиками и их графиком
     """
-    delivery_person = models.ForeignKey(ShopUser, on_delete=models.CASCADE, 
-                                      related_name='delivery_schedule', 
-                                      verbose_name='Доставщик')
+    delivery_person = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
+                                        related_name='delivery_schedule',
+                                        verbose_name='Доставщик')
     working_date = models.DateField(verbose_name='Рабочий день')
     shift_start = models.TimeField(verbose_name='Начало смены')
     shift_end = models.TimeField(verbose_name='Конец смены')
-    max_orders_per_day = models.PositiveIntegerField(default=10, verbose_name='Максимум заказов в день')
-    current_orders_count = models.PositiveIntegerField(default=0, verbose_name='Текущее количество заказов')
-    is_available = models.BooleanField(default=True, verbose_name='Доступен для назначения')
-    
+    max_orders_per_day = models.PositiveIntegerField(default=10,
+                                                     verbose_name='Максимум заказов в день')
+    current_orders_count = models.PositiveIntegerField(default=0,
+                                                       verbose_name='Текущее количество заказов')
+    is_available = models.BooleanField(default=True,
+                                       verbose_name='Доступен для назначения')
+
     class Meta:
         verbose_name = "График доставщика"
         verbose_name_plural = "Графики доставщиков"
         unique_together = ['delivery_person', 'working_date']
-    
+
     def __str__(self):
         return f"{self.delivery_person.full_name} на {self.working_date}"
-    
+
     def has_capacity(self):
         """Проверяет, может ли доставщик взять еще заказы"""
         return self.current_orders_count < self.max_orders_per_day and self.is_available
@@ -238,19 +240,20 @@ class Consultation(models.Model):
     """
     Модель заявки на консультацию
     """
-    user = models.ForeignKey(ShopUser, on_delete=models.CASCADE, 
-                           related_name='consultations',
-                           verbose_name='Пользователь')
-    creation_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    user = models.ForeignKey(ShopUser, on_delete=models.CASCADE,
+                             related_name='consultations',
+                             verbose_name='Пользователь')
+    creation_date = models.DateTimeField(auto_now_add=True,
+                                         verbose_name='Дата создания')
     processed = models.BooleanField(default=False, verbose_name='Статус заявки')
-    manager = models.ForeignKey(ShopUser, on_delete=models.SET_NULL, 
-                               null=True, blank=True, 
-                               related_name='managed_consultations',
-                               verbose_name='Менеджер')
+    manager = models.ForeignKey(ShopUser, on_delete=models.SET_NULL,
+                                null=True, blank=True,
+                                related_name='managed_consultations',
+                                verbose_name='Менеджер')
 
     class Meta:
         verbose_name = "Консультация"
         verbose_name_plural = "Консультации"
 
     def __str__(self):
-         return f'Консультация для {self.user.full_name} ({self.user.phone})'
+        return f'Консультация для {self.user.full_name} ({self.user.phone})'
