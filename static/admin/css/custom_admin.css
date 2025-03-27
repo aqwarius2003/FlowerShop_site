@@ -1,0 +1,10 @@
+/* Центрирование содержимого ячеек в таблицах админки */
+#result_list td, #result_list th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Стили для срочных заказов */
+.field-delivery_time_display {
+    white-space: pre-line;  /* Сохраняем переносы строк */
+} 

@@ -35,10 +35,9 @@
 				<div class="quiz__block">
 					<h1 class="quiz__title">На какой бюджет рассчитываете?</h1>
 					<div class="quiz__elems fic">
-						<button onclick="location.href='{% url 'result' %}'" class="quiz__elem">До 1 000 руб</button>
-						<button onclick="location.href='{% url 'result' %}'" class="quiz__elem">1 000 - 5 000 руб</button>
-						<button onclick="location.href='{% url 'result' %}'" class="quiz__elem">от 5 000 руб</button>
-						<button onclick="location.href='{% url 'result' %}'" class="quiz__elem">Не имеет значения</button>
+						{% for price_range in price_ranges %}
+						<button onclick="location.href='{% url 'result_filtered' category.id price_range.id %}'" class="quiz__elem">{{ price_range }}</button>
+						{% endfor %}
 					</div>
 					<div class="quiz__progress">
 						<div class="quiz__progress_step">

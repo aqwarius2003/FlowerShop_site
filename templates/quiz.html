@@ -35,9 +35,9 @@
 				<div class="quiz__block">
 					<h1 class="quiz__title">К какому событию нужен букет?</h1>
 					<div class="quiz__elems fic">
-						<button onclick="location.href='{% url 'quiz_step' %}'" class="quiz__elem">Свадьба</button>
-						<button onclick="location.href='{% url 'quiz_step' %}'" class="quiz__elem">День рождения</button>
-						<button onclick="location.href='{% url 'quiz_step' %}'" class="quiz__elem">Без повода</button>
+						{% for category in categories %}
+						<button onclick="location.href='{% url 'quiz_step' category.id %}'" class="quiz__elem">{{ category.name }}</button>
+						{% endfor %}
 					</div>
 					<div class="quiz__progress">
 						<div class="quiz__progress_step">

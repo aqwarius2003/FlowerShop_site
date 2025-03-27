@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
-from .models import Product, DeliveryTimeSlot
+from .models import Product, DeliveryTimeSlot, Category, PriceRange
 import datetime
 from django.shortcuts import render, redirect
 
@@ -8,6 +8,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import ShopUser, Consultation, Order
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -197,7 +200,13 @@ def order(request):
 def order_step(request):
     if request.method == 'GET':
         # Получаем данные из формы
+        name = request.GET.get('fname', '')
+        phone = request.GET.get('tel', '')
+        address = request.GET.get('adres', '')
         order_time = request.GET.get('orderTime', '')
+
+        # Логирование для отладки
+        logger.info(f"Order form data: name={name}, phone={phone}, address={address}, time={order_time}")
 
         # Обрабатываем выбранный слот доставки
         delivery_date = datetime.date.today()
@@ -214,7 +223,9 @@ def order_step(request):
                 if express_slot:
                     delivery_time_from = express_slot.time_start
                     delivery_time_to = express_slot.time_end
-            except:
+                    logger.info(f"Express delivery: {delivery_time_from} - {delivery_time_to}")
+            except Exception as e:
+                logger.error(f"Error getting express time slot: {str(e)}")
                 pass
         elif order_time.startswith('today'):
             # Доставка сегодня
@@ -225,7 +236,9 @@ def order_step(request):
                 time_slot = DeliveryTimeSlot.objects.get(id=slot_id)
                 delivery_time_from = time_slot.time_start
                 delivery_time_to = time_slot.time_end
+                logger.info(f"Today delivery: {delivery_time_from} - {delivery_time_to}")
             except DeliveryTimeSlot.DoesNotExist:
+                logger.error(f"Time slot not found: {slot_id}")
                 pass
         elif order_time.startswith('tomorrow'):
             # Доставка завтра
@@ -237,14 +250,16 @@ def order_step(request):
                 time_slot = DeliveryTimeSlot.objects.get(id=slot_id)
                 delivery_time_from = time_slot.time_start
                 delivery_time_to = time_slot.time_end
+                logger.info(f"Tomorrow delivery: {delivery_time_from} - {delivery_time_to}")
             except DeliveryTimeSlot.DoesNotExist:
+                logger.error(f"Time slot not found: {slot_id}")
                 pass
 
         # Сохраняем информацию в сессии для последующего создания заказа
         request.session['order_data'] = {
-            'name': request.GET.get('fname', ''),
-            'phone': request.GET.get('tel', ''),
-            'address': request.GET.get('adres', ''),
+            'name': name,
+            'phone': phone,
+            'address': address,
             'delivery_date': delivery_date.isoformat(),
             'is_express': is_express,
             'delivery_time_from': delivery_time_from.strftime(
@@ -252,6 +267,7 @@ def order_step(request):
             'delivery_time_to': delivery_time_to.strftime(
                 '%H:%M:%S') if delivery_time_to else None
         }
+        logger.info(f"Saved order data to session: {request.session['order_data']}")
 
     return render(request, 'order-step.html')
 
@@ -262,14 +278,28 @@ def order_complete(request):
 
 
 def quiz(request):
-    return render(request, 'quiz.html')
+    # Получаем все категории из базы данных
+    categories = Category.objects.all().order_by('name')
+    return render(request, 'quiz.html', {'categories': categories})
 
 
-def quiz_step(request):
-    return render(request, 'quiz-step.html')
+def quiz_step(request, category_id):
+    # Получаем выбранную категорию
+    category = get_object_or_404(Category, id=category_id)
+    
+    # Получаем все ценовые диапазоны
+    price_ranges = PriceRange.objects.all().order_by('min_price')
+    
+    context = {
+        'category': category,
+        'price_ranges': price_ranges
+    }
+    
+    return render(request, 'quiz-step.html', context)
 
 
 def result(request):
+    """Показывает случайный букет из всего каталога"""
     # Получаем случайный активный букет
     random_bouquet = Product.objects.filter(status='active').order_by('?').first()
 
@@ -283,6 +313,44 @@ def result(request):
     return render(request, 'result.html', {'bouquet': random_bouquet})
 
 
+def result_filtered(request, category_id, price_range_id):
+    """Показывает букет, отфильтрованный по категории и ценовому диапазону"""
+    # Получаем выбранную категорию и ценовой диапазон
+    category = get_object_or_404(Category, id=category_id)
+    price_range = get_object_or_404(PriceRange, id=price_range_id)
+    
+    # Получаем букеты, соответствующие критериям
+    # Сначала фильтрация по категории
+    bouquets = Product.objects.filter(
+        categories=category,
+        status='active'
+    )
+    
+    # Затем по ценовому диапазону
+    if price_range.min_price and price_range.max_price:
+        bouquets = bouquets.filter(price__gte=price_range.min_price, price__lte=price_range.max_price)
+    elif price_range.min_price:
+        bouquets = bouquets.filter(price__gte=price_range.min_price)
+    elif price_range.max_price:
+        bouquets = bouquets.filter(price__lte=price_range.max_price)
+    
+    # Если нет подходящих букетов, берем все активные
+    if not bouquets.exists():
+        bouquets = Product.objects.filter(status='active')
+    
+    # Берем случайный букет из отфильтрованного списка
+    random_bouquet = bouquets.order_by('?').first()
+    
+    # Модифицируем путь к изображению
+    if random_bouquet and random_bouquet.image:
+        if str(random_bouquet.image).startswith('static/'):
+            random_bouquet.image_url = str(random_bouquet.image)[7:]
+        else:
+            random_bouquet.image_url = str(random_bouquet.image)
+    
+    return render(request, 'result.html', {'bouquet': random_bouquet})
+
+
 def privacy(request):
     # Создайте шаблон privacy.html или перенаправляйте куда-то
     return render(request, 'privacy.html')
@@ -293,26 +361,34 @@ def process_order(request):
         order_data = request.session.get('order_data', {})
         bouquet_data = request.session.get('bouquet_data', {})
         
+        # Логирование для отладки
+        logger.info(f"Order data from session: {order_data}")
+        logger.info(f"Bouquet data from session: {bouquet_data}")
+        
         if not order_data:
+            logger.error("Order data not found in session")
             return JsonResponse({'success': False, 'error': 'Данные заказа не найдены'})
         
         if not bouquet_data:
+            logger.error("Bouquet data not found in session")
             return JsonResponse({'success': False, 'error': 'Данные букета не найдены'})
         
         try:
             # Получаем букет
             bouquet = Product.objects.get(id=bouquet_data['id'])
+            logger.info(f"Found product: {bouquet.name}, ID: {bouquet.id}")
             
             # Создаем или получаем пользователя
             user, created = ShopUser.objects.get_or_create(
                 phone=order_data['phone'],
                 defaults={
-                    'user_id': str(uuid.uuid4()),
+                    # Удаляем поле user_id, так как его нет в модели
                     'full_name': order_data['name'],
                     'status': 'user',
                     'address': order_data['address']
                 }
             )
+            logger.info(f"User: {user.full_name}, Created: {created}")
 
             # Создаем заказ с информацией о букете
             order = Order.objects.create(
@@ -326,16 +402,18 @@ def process_order(request):
                 is_express_delivery=order_data['is_express'],
                 status='created'
             )
+            logger.info(f"Created order with ID: {order.id}")
 
             # Добавляем время доставки, если оно есть
-            if order_data['delivery_time_from']:
+            if order_data.get('delivery_time_from'):
                 order.delivery_time_from = datetime.datetime.strptime(
                     order_data['delivery_time_from'], '%H:%M:%S').time()
-            if order_data['delivery_time_to']:
+            if order_data.get('delivery_time_to'):
                 order.delivery_time_to = datetime.datetime.strptime(
                     order_data['delivery_time_to'], '%H:%M:%S').time()
             
             order.save()
+            logger.info(f"Order saved: {order.id}")
 
             # Очищаем данные из сессии
             del request.session['order_data']
@@ -343,10 +421,12 @@ def process_order(request):
             
             return JsonResponse({
                 'success': True,
-                'message': 'Мы свяжемся с Вами в ближайшее время для уточнения заказа'
+                'message': 'Мы свяжемся с Вами в ближайшее время для уточнения заказа',
+                'order_id': order.id
             })
             
         except Exception as e:
+            logger.error(f"Error creating order: {str(e)}", exc_info=True)
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
