@@ -1,118 +1,94 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Flower Shop</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{% static 'css/main.css' %}">
-	<!-- Подключаем дополнительные стили для букетов -->
-	<link rel="stylesheet" href="{% static 'css/bouquet-styles.css' %}">
-	<!-- Подключаем jQuery для Ajax запросов -->
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-<body>
-	<header id="header">
-		<div class="container">
-			<div class="header ficb">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo"></a>
-				<nav>
-					<ul class="menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-			</div>
-		</div>
-	</header>
-	<section id="catalog">
-		<div class="container p100">
-			<div class="catalog">
-				<div class="title">Все букеты</div>
-				<div class="catalog__block">
-					<!-- Контейнер для букетов -->
-					<div id="bouquets-container">
-						{% include 'bouquet_items.html' with bouquets=bouquets %}
-					</div>
-					
-					<!-- Кнопка "Показать еще" -->
-					{% if show_more_button %}
-					<button id="load-more-btn" class="btn largeBtn catalog__btn" data-offset="6">Показать ещё</button>
-					{% endif %}
+
+{% block title %}Flower Shop - Каталог{% endblock %}
+
+{% block body_class %}show-consultation{% endblock %}
+
+{% block extra_css %}
+<!-- Подключаем дополнительные стили для букетов -->
+<link rel="stylesheet" href="{% static 'css/bouquet-styles.css' %}">
+<!-- Подключаем jQuery для Ajax запросов -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+    /* Дополнительные стили для улучшения пропорций страницы каталога */
+    #catalog {
+        padding: 30px 0 60px;
+    }
+    .title {
+        margin-bottom: 25px;
+    }
+    .catalog__block {
+        margin-bottom: 20px;
+    }
+    .recommended__elems {
+        margin-bottom: 25px !important;
+    }
+    .largeBtn {
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="catalog">
+	<div class="container">
+		<div class="catalog">
+			<div class="title">Все букеты</div>
+			<div class="catalog__block">
+				<!-- Контейнер для букетов -->
+				<div id="bouquets-container">
+					{% include 'bouquet_items.html' with bouquets=bouquets %}
 				</div>
-			</div>
-		</div>
-	</section>
-	<section id="consultation">
-		<div class="container">
-			<div class="consultation">
-				<div class="title consultation__title">Оставьте заявку на консультацию</div>
-				<form action="{% url 'consultation' %}" class="consultation__form">
-					<input type="text" name="fname" class="consultation__form_input" placeholder="Введите Имя" required>
-					<input type="text" name="tel" class="consultation__form_input" placeholder="+ 7 (999) 000 00 00" required>
-					<button type="submit" class="consultation__form_btn">Отправить</button>
-				</form>
-			</div>
-		</div>
-	</section>
-	<footer id="footer">
-		<div class="container">
-			<div class="footer">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo footer__logo"></a>
-				<nav>
-					<ul class="menu footer__menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-				<hr class="line"></hr>
-				<a href="{% url 'privacy' %}" class="footer__poli">Политика конфиденциальности</a>
-				<p class="footer_cop">©️2022. FlowerShop. Все права защищены</p>
-			</div>
-		</div>
-	</footer>
-
-	<!-- JavaScript для загрузки дополнительных букетов -->
-	<script>
-		$(document).ready(function() {
-			// Обработчик клика на кнопку "Показать еще"
-			$('#load-more-btn').click(function() {
-				var offset = $(this).data('offset');
 				
-				// Отправляем Ajax запрос
-				$.ajax({
-					url: '{% url "load_more_bouquets" %}',
-					data: {
-						'offset': offset
-					},
-					success: function(data) {
-						// Добавляем новые букеты в контейнер
-						$('#bouquets-container').append(data.html);
-						
-						// Обновляем смещение для следующей загрузки
-						$('#load-more-btn').data('offset', data.next_offset);
-						
-						// Скрываем кнопку, если больше нет букетов
-						if (!data.has_more) {
-							$('#load-more-btn').hide();
-						}
+				<!-- Кнопка "Показать еще" -->
+				{% if show_more_button %}
+				<button id="load-more-btn" class="btn largeBtn catalog__btn" data-offset="6">Показать ещё</button>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</section>
+{% endblock %}
 
-						// Плавно прокручиваем к секции консультации
-						var consultationSection = $('#consultation');
-						var consultationHeight = consultationSection.outerHeight();
-						var windowHeight = $(window).height();
-						var scrollPosition = consultationSection.offset().top - (windowHeight - consultationHeight);
-						
-						$('html, body').animate({
-							scrollTop: scrollPosition
-						}, 1000);
+{% block extra_js %}
+<!-- JavaScript для загрузки дополнительных букетов -->
+<script>
+	$(document).ready(function() {
+		// Обработчик клика на кнопку "Показать еще"
+		$('#load-more-btn').click(function() {
+			var offset = $(this).data('offset');
+			
+			// Отправляем Ajax запрос
+			$.ajax({
+				url: '{% url "load_more_bouquets" %}',
+				data: {
+					'offset': offset
+				},
+				success: function(data) {
+					// Добавляем новые букеты в контейнер
+					$('#bouquets-container').append(data.html);
+					
+					// Обновляем смещение для следующей загрузки
+					$('#load-more-btn').data('offset', data.next_offset);
+					
+					// Скрываем кнопку, если больше нет букетов
+					if (!data.has_more) {
+						$('#load-more-btn').hide();
 					}
-				});
+
+					// Плавно прокручиваем к секции консультации
+					var consultationSection = $('#consultation');
+					var consultationHeight = consultationSection.outerHeight();
+					var windowHeight = $(window).height();
+					var scrollPosition = consultationSection.offset().top - (windowHeight - consultationHeight);
+					
+					$('html, body').animate({
+						scrollTop: scrollPosition
+					}, 1000);
+				}
 			});
 		});
-	</script>
-</body>
-</html>
+	});
+</script>
+{% endblock %}

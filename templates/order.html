@@ -1,108 +1,102 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Flower Shop</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{% static 'css/main.css' %}">	
-</head>
-<body>
-	<header id="header">
-		<div class="container">
-			<div class="header ficb">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo"></a>
-				<nav>
-					<ul class="menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-			</div>
-		</div>
-	</header>
-	<section id="order">
-		<div class="container">
-			<div class="order">
-				<div class="order__block">
-					<div class="order_items">
-						<div class="title">Оформление доставки</div>
-						<form action="{% url 'order_step' %}" class="order__form">
-							<div class="order__form_block ficb">
-								<input type="text" name="fname" class="order__form_input" placeholder="Введите Имя" required>
-								<input type="text" name="tel" class="order__form_input" placeholder="+ 7 (999) 000 00 00" required>
-								<input type="text" name="adres" class="order__form_input" placeholder="Адрес доставки" required>
+
+{% block title %}Flower Shop - Оформление заказа{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Дополнительные стили для улучшения пропорций на странице заказа */
+    #order {
+        padding: 30px 0 60px;
+    }
+    .order {
+        padding-bottom: 20px;
+    }
+    .title {
+        margin-bottom: 25px;
+    }
+    .order__form_block {
+        margin-bottom: 20px;
+    }
+    .order__form_btns {
+        margin-bottom: 15px;
+    }
+    .order__form_subtitle {
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
+    .order__form_line {
+        margin: 20px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="order">
+	<div class="container">
+		<div class="order">
+			<div class="order__block">
+				<div class="order_items">
+					<div class="title">Оформление доставки</div>
+					<form action="{% url 'order_step' %}" class="order__form">
+						<div class="order__form_block ficb">
+							<input type="text" name="fname" class="order__form_input" placeholder="Введите Имя" required>
+							<input type="text" name="tel" class="order__form_input" placeholder="+ 7 (999) 000 00 00" required>
+							<input type="text" name="adres" class="order__form_input" placeholder="Адрес доставки" required>
+						</div>
+						<div class="order__form_btns fic">
+							{% if express_slot %}
+							<div class="order__form_radioBlock">
+								<input type="radio" name="orderTime" id="radio-express" value="express" class="order__form_radio" checked />
+								<label for="radio-express" class="radioLable">{{ express_slot.display_name }}</label>
 							</div>
-							<div class="order__form_btns fic">
-								{% if express_slot %}
-								<div class="order__form_radioBlock">
-									<input type="radio" name="orderTime" id="radio-express" value="express" class="order__form_radio" checked />
-									<label for="radio-express" class="radioLable">{{ express_slot.display_name }}</label>
-								</div>
-								{% elif express_message %}
-								<div class="order__form_subtitle" style="color: #FF6B6B;">
-									{{ express_message|safe }}
-								</div>
-								{% endif %}
-								
-								{% if today_slots %}
-								<p class="order__form_subtitle">Доставка сегодня ({{ current_date|date:"d.m.Y" }}):</p>
-								{% for slot in today_slots %}
-								<div class="order__form_radioBlock">
-									<input type="radio" name="orderTime" id="radio-today-{{ forloop.counter }}" value="today-{{ slot.id }}" class="order__form_radio" />
-									<label for="radio-today-{{ forloop.counter }}" class="radioLable">{{ slot.display_name }}</label>
-								</div>
-								{% endfor %}
-								{% else %}
-								<!-- Если сегодня слоты недоступны, не показываем заголовок для сегодняшних слотов -->
-								{% endif %}
-								
-								{% if tomorrow_slots %}
-								<p class="order__form_subtitle">{% if not today_slots %}Доставка {% endif %}завтра ({{ tomorrow_date|date:"d.m.Y" }}):</p>
-								{% for slot in tomorrow_slots %}
-								<div class="order__form_radioBlock">
-									<input type="radio" name="orderTime" id="radio-tomorrow-{{ forloop.counter }}" value="tomorrow-{{ slot.id }}" class="order__form_radio" />
-									<label for="radio-tomorrow-{{ forloop.counter }}" class="radioLable">{{ slot.display_name }}</label>
-								</div>
-								{% endfor %}
-								{% endif %}
+							{% elif express_message %}
+							<div class="order__form_subtitle" style="color: #FF6B6B;">
+								{{ express_message|safe }}
 							</div>
-							<div class="order__form_line"></div>
-							<div class="order__form_btns ficb">
-								<button type="submit" class="btn order__form_pay">Оплатить</button>
-								<button onclick="location.href='{% url 'catalog' %}'" class="btn order__form_btn">Назад</button>
+							{% endif %}
+							
+							{% if today_slots %}
+							<p class="order__form_subtitle">Доставка сегодня ({{ current_date|date:"d.m.Y" }}):</p>
+							{% for slot in today_slots %}
+							<div class="order__form_radioBlock">
+								<input type="radio" name="orderTime" id="radio-today-{{ forloop.counter }}" value="today-{{ slot.id }}" class="order__form_radio" />
+								<label for="radio-today-{{ forloop.counter }}" class="radioLable">{{ slot.display_name }}</label>
 							</div>
-						</form>
-					</div>
-					
+							{% endfor %}
+							{% else %}
+							<!-- Если сегодня слоты недоступны, не показываем заголовок для сегодняшних слотов -->
+							{% endif %}
+							
+							{% if tomorrow_slots %}
+							<p class="order__form_subtitle">{% if not today_slots %}Доставка {% endif %}завтра ({{ tomorrow_date|date:"d.m.Y" }}):</p>
+							{% for slot in tomorrow_slots %}
+							<div class="order__form_radioBlock">
+								<input type="radio" name="orderTime" id="radio-tomorrow-{{ forloop.counter }}" value="tomorrow-{{ slot.id }}" class="order__form_radio" />
+								<label for="radio-tomorrow-{{ forloop.counter }}" class="radioLable">{{ slot.display_name }}</label>
+							</div>
+							{% endfor %}
+							{% endif %}
+						</div>
+						<div class="order__form_line"></div>
+						<div class="order__form_btns ficb">
+							<button type="submit" class="btn order__form_pay">Оплатить</button>
+							<button onclick="location.href='{% url 'catalog' %}';" class="btn order__form_btn">Назад</button>
+						</div>
+					</form>
 				</div>
+				
 			</div>
 		</div>
-		<img src="{% static 'img/orderImg.jpg' %}" alt="orderImg" class="order__img">
-	</section>
-	<footer id="footer">
-		<div class="container">
-			<div class="footer">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo footer__logo"></a>
-				<nav>
-					<ul class="menu footer__menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-				<hr class="line"></hr>
-				<a href="{% url 'privacy' %}" class="footer__poli">Политика конфиденциальности</a>
-				<p class="footer_cop">©️2022. FlowerShop. Все права защищены</p>
-			</div>
-		</div>
-	</footer>
-	<script>
-		document.querySelector('input[type=radio]').onclick = function(e) {
-			console.log(e.target.value);
-		}
-	</script>
-</body>
-</html>
+	</div>
+	<img src="{% static 'img/orderImg.jpg' %}" alt="orderImg" class="order__img">
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+	document.querySelector('input[type=radio]').onclick = function(e) {
+		console.log(e.target.value);
+	}
+</script>
+{% endblock %}

@@ -481,13 +481,26 @@ margin-bottom: 30px;
 	border-radius: 10px;
 	height: 8px;
 	position: relative;
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
 }
-.quiz__progress_lineActive {;
+.quiz__progress_lineActive {
 	position: absolute;
 	background: #17CF97;
 	border-radius: 10px;
-	width: 8px;
 	height: 8px;
+    left: 0;
+    top: 0;
+}
+
+/* Стили для шагов прогресса */
+.progress-step-1 .quiz__progress_lineActive {
+    width: 50%;
+}
+
+.progress-step-2 .quiz__progress_lineActive {
+    width: 100%;
 }
 
 /*result.html*/

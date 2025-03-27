@@ -1,57 +1,39 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Flower Shop</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{% static 'css/main.css' %}">	
-</head>
-<body>
-	<header id="header">
-		<div class="container">
-			<div class="header ficb">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo"></a>
-				<nav>
-					<ul class="menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
+
+{% block title %}Flower Shop - Подбор букета - Шаг 2{% endblock %}
+
+{% block body_class %}show-consultation{% endblock %}
+
+{% block content %}
+<section id="quiz" style="padding: 40px 0 80px;">
+	<div class="container">
+		<div class="quiz">
+			<div class="quiz__back" style="padding-top: 20px;">
+				<a href="{% url 'quiz' %}" class="quiz__back_link fic">
+					<img src="{% static 'img/arrow-left.svg' %}" alt="arrow-left" class="arrowLeft">
+					<span class="quiz__back_intro">Назад</span>
+				</a>
 			</div>
-		</div>
-	</header>
-	<section id="quiz">
-		<div class="container">
-			<div class="quiz">
-				<div class="quiz__back">
-					<a href="{% url 'quiz' %}" class="quiz__back_link fic">
-						<img src="{% static 'img/arrow-left.svg' %}" alt="arrow-left" class="arrowLeft">
-						<span class="quiz__back_intro">Назад</span>
-					</a>
+			<div class="quiz__block">
+				<h1 class="quiz__title" style="margin-top: 30px; margin-bottom: 50px;">На какой бюджет рассчитываете?</h1>
+				<div class="quiz__elems fic">
+					{% for price_range in price_ranges %}
+					<button onclick="location.href='{% url 'result_filtered' category.id price_range.id %}';" class="quiz__elem">{{ price_range }}</button>
+					{% endfor %}
 				</div>
-				<div class="quiz__block">
-					<h1 class="quiz__title">На какой бюджет рассчитываете?</h1>
-					<div class="quiz__elems fic">
-						{% for price_range in price_ranges %}
-						<button onclick="location.href='{% url 'result_filtered' category.id price_range.id %}'" class="quiz__elem">{{ price_range }}</button>
-						{% endfor %}
+				<div class="quiz__progress progress-step-2" style="margin-top: 50px; margin-bottom: 40px;">
+					<div class="quiz__progress_step">
+						<span class="quiz__progress_num">2</span>
+						<span class="quiz__progress_in"> шаг из </span>
+						<span class="quiz__progress_num">2</span>
 					</div>
-					<div class="quiz__progress">
-						<div class="quiz__progress_step">
-							<span class="quiz__progress_num">2</span>
-							<span class="quiz__progress_in"> шаг из </span>
-							<span class="quiz__progress_num">2</span>
-						</div>
-						<div class="quiz__progress_line">
-							<div class="quiz__progress_lineActive"></div>
-						</div>
+					<div class="quiz__progress_line">
+						<div class="quiz__progress_lineActive"></div>
 					</div>
 				</div>
 			</div>
 		</div>
-	</section>
-</body>
-</html>
+	</div>
+</section>
+{% endblock %}

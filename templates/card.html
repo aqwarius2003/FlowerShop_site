@@ -1,105 +1,82 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{ bouquet.name }} - Flower Shop</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{% static 'css/main.css' %}">	
-</head>
-<body>
-	<header id="header">
-		<div class="container">
-			<div class="header ficb">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo"></a>
-				<nav>
-					<ul class="menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
+
+{% block title %}{{ bouquet.name }} - Flower Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Дополнительные стили для улучшения пропорций страницы букета */
+    #card {
+        padding: 30px 0 60px;
+    }
+    .card {
+        margin-bottom: 30px;
+    }
+    .title {
+        margin-bottom: 15px;
+    }
+    .card__block_price {
+        margin-bottom: 20px;
+    }
+    .card__elems {
+        margin-bottom: 15px;
+    }
+    .largeBtn {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="card">
+	<div class="container">
+		<div class="card ficb">
+			<div class="card__block card__block_first">
+				{% if bouquet.image %}
+				<img src="{{ bouquet.image.url }}" alt="{{ bouquet.name }}" class="card__img">
+				{% else %}
+				<img src="{% static 'img/cardImg.jpg' %}" alt="{{ bouquet.name }}" class="card__img">
+				{% endif %}
 			</div>
-		</div>
-	</header>
-	<section id="card">
-		<div class="container">
-			<div class="card ficb">
-				<div class="card__block card__block_first">
-					{% if bouquet.image %}
-					<img src="{{ bouquet.image.url }}" alt="{{ bouquet.name }}" class="card__img">
-					{% else %}
-					<img src="{% static 'img/cardImg.jpg' %}" alt="{{ bouquet.name }}" class="card__img">
-					{% endif %}
-				</div>
-				<div class="card__block card__block_sec">
-					<div class="title">{{ bouquet.name }}</div>
-					<div class="card__block_price">{{ bouquet.price|floatformat:0 }} руб</div>
-					
-					<!-- Описание букета -->
-					{% if bouquet.description %}
-					<div class="card__elems">
-						<span class="card__elems_intro">Описание</span>
-						<div class="card__items">
-							<span class="card_items_intro">
-								{{ bouquet.description }}
-							</span>
-						</div>
+			<div class="card__block card__block_sec">
+				<div class="title">{{ bouquet.name }}</div>
+				<div class="card__block_price">{{ bouquet.price|floatformat:0 }} руб</div>
+				
+				<!-- Описание букета -->
+				{% if bouquet.description %}
+				<div class="card__elems">
+					<span class="card__elems_intro">Описание</span>
+					<div class="card__items">
+						<span class="card_items_intro">
+							{{ bouquet.description }}
+						</span>
 					</div>
-					{% endif %}
-					
-					<!-- Состав букета -->
-					<div class="card__elems">
-						<span class="card__elems_intro">Состав</span>
-						<div class="card__items">
-							<span class="card_items_intro">
-								{{ bouquet.composition }}
-							</span>
-						</div>
-					</div>
-					
-					<!-- Кнопка заказа букета -->
-					<button id="order-button" class="btn largeBtn card__btn">Заказать букет</button>
 				</div>
+				{% endif %}
+				
+				<!-- Состав букета -->
+				<div class="card__elems">
+					<span class="card__elems_intro">Состав</span>
+					<div class="card__items">
+						<span class="card_items_intro">
+							{{ bouquet.composition }}
+						</span>
+					</div>
+				</div>
+				
+				<!-- Кнопка заказа букета -->
+				<button id="order-button" class="btn largeBtn card__btn">Заказать букет</button>
 			</div>
 		</div>
-	</section>
-	<section id="consultation">
-		<div class="container">
-			<div class="consultation">
-				<div class="title consultation__title">Оставьте заявку на консультацию</div>
-				<form action="{% url 'consultation' %}" class="consultation__form">
-					<input type="text" name="fname" class="consultation__form_input" placeholder="Введите Имя" required>
-					<input type="text" name="tel" class="consultation__form_input" placeholder="+ 7 (999) 000 00 00" required>
-					<button type="submit" class="consultation__form_btn">Отправить</button>
-				</form>
-			</div>
-		</div>
-	</section>
-	<footer id="footer">
-		<div class="container">
-			<div class="footer">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo footer__logo"></a>
-				<nav>
-					<ul class="menu footer__menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-				<hr class="line"></hr>
-				<a href="{% url 'privacy' %}" class="footer__poli">Политика конфиденциальности</a>
-				<p class="footer_cop">©️2022. FlowerShop. Все права защищены</p>
-			</div>
-		</div>
-	</footer>
-	
-	<!-- JavaScript для кнопки заказа -->
-	<script>
-		document.getElementById('order-button').addEventListener('click', function() {
-			window.location.href = '{% url "order" %}?bouquet_id={{ bouquet.id }}';
-		});
-	</script>
-</body>
-</html>
+	</div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<!-- JavaScript для кнопки заказа -->
+<script>
+	document.getElementById('order-button').addEventListener('click', function() {
+		window.location.href = '{% url "order" %}?bouquet_id={{ bouquet.id }}';
+	});
+</script>
+{% endblock %}

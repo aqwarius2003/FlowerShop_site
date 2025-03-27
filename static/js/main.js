@@ -6,7 +6,31 @@ document.addEventListener('DOMContentLoaded', function() {
     initForms();
     // Инициализация квиза
     initQuiz();
+    // Инициализация переключения видимости контактов
+    initContactsToggle();
 });
+
+/**
+ * Инициализирует переключение видимости секций контактов и консультации
+ */
+function initContactsToggle() {
+    const contactLinks = document.querySelectorAll('.contact-link');
+    contactLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const contactsSection = document.getElementById('contacts');
+            const consultationSection = document.getElementById('consultation');
+            
+            contactsSection.classList.toggle('visible');
+            consultationSection.classList.toggle('visible');
+            
+            // Плавная прокрутка к секции контактов
+            if (contactsSection.classList.contains('visible')) {
+                contactsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+}
 
 /**
  * Инициализация всех форм на странице
