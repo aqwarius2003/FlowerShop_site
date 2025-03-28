@@ -199,12 +199,12 @@ def order(request):
 
 
 def order_step(request):
-    if request.method == 'GET':
-        # Получаем данные из формы
-        name = request.GET.get('fname', '')
-        phone = request.GET.get('tel', '')
-        address = request.GET.get('adres', '')
-        order_time = request.GET.get('orderTime', '')
+    if request.method == 'POST':
+        # Обработка данных формы
+        name = request.POST.get('fname', '')
+        phone = request.POST.get('tel', '')
+        address = request.POST.get('adres', '')
+        order_time = request.POST.get('orderTime', '')
 
         # Логирование для отладки
         logger.info(f"Order form data: name={name}, phone={phone}, address={address}, time={order_time}")
@@ -273,8 +273,17 @@ def order_step(request):
     return render(request, 'order-step.html')
 
 
+# def order_complete(request):
+#     # Здесь будет логика обработки заказа
+#     return render(request, 'order-step.html')
+
 def order_complete(request):
-    # Здесь будет логика обработки заказа
+    if request.method == 'POST':
+        # Обработка данных формы и создание заказа
+        return JsonResponse({
+            'success': True,
+            'message': 'Заказ успешно оформлен!',
+        })
     return render(request, 'order-step.html')
 
 
