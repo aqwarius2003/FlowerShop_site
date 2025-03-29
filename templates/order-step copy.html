@@ -10,7 +10,7 @@
 			<div class="order__block">
 				<div class="order_items">
 					<div class="title">Оплата</div>
-					<form id="orderForm" class="order__form orderStep_form">
+					<form method="POST" action="{% url 'process_order' %}" class="order__form orderStep_form">
 						{% csrf_token %}
 						<div class="order__form_block">
 							<div class="order__form_items">
@@ -32,10 +32,11 @@
 						<div class="order__form_line"></div>
 						<div class="order__form_btns ficb">
 							<button type="submit" class="btn order__form_pay">Оплатить</button>
-							<button type="button" onclick="location.href='{% url 'order' %}'" class="btn order__form_btn">Назад</button>
+							<button onclick="location.href='{% url 'order' %}';" class="btn order__form_btn">Назад</button>
 						</div>
 					</form>
 				</div>
+				<!-- <div class="blockImgHiden"></div> -->
 			</div>
 		</div>
 	</div>
@@ -46,6 +47,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Функция для показа уведомления
     function showNotification(message) {
         const notification = document.createElement('div');
         notification.style.cssText = `
@@ -62,45 +64,37 @@ document.addEventListener('DOMContentLoaded', function() {
         notification.textContent = message;
         document.body.appendChild(notification);
 
+        // Удаляем уведомление через 5 секунд
         setTimeout(() => {
             notification.remove();
+            // Перенаправляем на главную
             window.location.href = '{% url "index" %}';
         }, 5000);
     }
 
-    const form = document.getElementById('orderForm');
-    
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            // Немедленно предотвращаем стандартную отправку формы
-            e.preventDefault();
-            e.stopPropagation();
-            
-            try {
-                const formData = new FormData(this);
-                const response = await fetch('{% url "process_order" %}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    showNotification(data.message);
-                } else {
-                    showNotification(data.error || 'Произошла ошибка при оформлении заказа');
-                }
-            } catch (error) {
-                console.error('Error:', error);
+    // Обработчик отправки формы
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch('{% url "process_order" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message);
+            } else {
                 showNotification('Произошла ошибка при оформлении заказа');
             }
-            
-            return false; // Дополнительная защита от отправки формы
+        })
+        .catch(error => {
+            showNotification('Произошла ошибка при оформлении заказа');
         });
-    }
+    });
 });
 </script>
 {% endblock %}

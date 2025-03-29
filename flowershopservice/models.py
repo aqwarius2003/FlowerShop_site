@@ -10,7 +10,7 @@ class ShopUser(models.Model):
     Модель пользователя магазина.
     """
     full_name = models.CharField(max_length=100, verbose_name='ФИО')
-    phone = PhoneField(blank=True, help_text='Телефон')
+    phone = PhoneField(blank=True, help_text='Телефон', unique=True)
     address = models.CharField(max_length=200, null=True, blank=True, verbose_name='Адрес')
     telegram_id = models.CharField(
         'Telegram ID',
