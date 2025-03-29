@@ -8,6 +8,8 @@
 {% block header_wrapper_class %}mainBg{% endblock %}
 
 {% block extra_css %}
+<!-- Подключаем дополнительные стили для букетов -->
+<link rel="stylesheet" href="{% static 'css/bouquet-styles.css' %}">
 <style>
     /* Дополнительные стили для улучшения пропорций на главной странице */
     #banner {
@@ -24,7 +26,7 @@
         right: 0;
         top: 0;
         z-index: 1;
-        max-height: 600px; /* Ограничиваем высоту изображения */
+        max-height: 600px;
         object-fit: contain;
         object-position: top right;
     }
@@ -41,9 +43,6 @@
     .title {
         margin-bottom: 25px;
     }
-    .recommended__elems {
-        margin-bottom: 30px !important;
-    }
 </style>
 {% endblock %}
 
@@ -54,7 +53,7 @@
 			<div class="banner__block">
 				<h1 class="banner__title">Мастерская цветов</h1>
 				<p class="banner__text">Подберем для вас букет за два шага, который идеально подойдет под вашу ситуацию</p>
-				<button onclick="location.href='{% url 'quiz' %}';" class="btn banner__btn">Подобрать букет</button>
+				<button onclick="location.href='{% url 'quiz' %}'" class="btn banner__btn">Подобрать букет</button>
 			</div>
 			<img src="{% static 'img/bannerImg.png' %}" alt="banner Img" class="banner__img">
 		</div>
@@ -67,32 +66,24 @@
 	<div class="container">
 		<div class="recommended">
 			<div class="title">Рекомендуем</div>
-			<div class="recommended__elems ficb">
-				<div class="recommended__block recommended__block_first">
-					<div class="recommended__block_elems ficb">
-						<span class="recommended__block_intro">Летнее утро</span>
-						<span class="recommended__block_price">3 600 руб</span>
+			<div class="recommended__elems">
+				{% for bouquet in featured_products %}
+					<div class="recommended__block bouquet-item" 
+						 {% if bouquet.image %}style="background-image: url('{{ bouquet.image.url }}');"{% endif %}>
+						<a href="{% url 'bouquet_detail' bouquet.id %}" class="recommended__block_img_link">
+							<div class="recommended__block_elems ficb">
+								<span class="recommended__block_intro">{{ bouquet.name }}</span>
+								<span class="recommended__block_price">{{ bouquet.price|floatformat:0 }} руб</span>
+							</div>
+						</a>
 					</div>
-				</div>
-				<div class="recommended__block recommended__block_sec">
-					<div class="recommended__block_elems ficb">
-						<span class="recommended__block_intro">Зимняя сказка</span>
-						<span class="recommended__block_price">4 100 руб</span>
-					</div>
-				</div>
-				<div class="recommended__block recommended__block_thr">
-					<div class="recommended__block_elems ficb">
-						<span class="recommended__block_intro">Нежный</span>
-						<span class="recommended__block_price">2 900 руб</span>
-					</div>
-				</div>
+				{% endfor %}
 			</div>
-			<button onclick="location.href='{% url 'catalog' %}';" class="btn recommended__btn">Показать всю коллекцию</button>
+			<button onclick="location.href='{% url 'catalog' %}'" class="btn recommended__btn">Показать всю коллекцию</button>
 		</div>
 	</div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
-
 {% endblock %}

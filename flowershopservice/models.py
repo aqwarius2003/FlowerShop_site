@@ -3,6 +3,8 @@ from phone_field import PhoneField
 import datetime
 from django.utils.html import mark_safe
 from django.utils import timezone
+import random
+from django.core.cache import cache
 
 
 class ShopUser(models.Model):
@@ -112,6 +114,43 @@ class Product(models.Model):
         return "Нет изображения"
     
     admin_image_preview.short_description = 'Превью'
+
+    @classmethod
+    def get_featured_products(cls):
+        """Получение рекомендуемых товаров с кэшированием"""
+        # Ключ для кэширования
+        cache_key = 'featured_products'
+        
+        # Пробуем получить данные из кэша
+        featured_products = cache.get(cache_key)
+        
+        if featured_products is None:
+            # Получаем все активные товары с предзагрузкой изображений
+            featured = cls.objects.filter(status='active', is_featured=True).select_related()
+            non_featured = cls.objects.filter(status='active', is_featured=False).select_related()
+            
+            featured_count = featured.count()
+            
+            if featured_count >= 3:
+                # Если отмеченных товаров больше 3, берем случайные 3
+                featured_products = random.sample(list(featured), 3)
+            else:
+                # Если отмеченных товаров меньше 3, добавляем случайные неотмеченные
+                featured_products = list(featured)
+                needed_count = 3 - featured_count
+                if needed_count > 0 and non_featured.exists():
+                    random_products = random.sample(list(non_featured), min(needed_count, non_featured.count()))
+                    featured_products.extend(random_products)
+            
+            # Кэшируем результат на 1 час
+            cache.set(cache_key, featured_products, 60 * 60)
+        
+        return featured_products
+
+    def save(self, *args, **kwargs):
+        """Переопределяем метод save для инвалидации кэша при изменении товара"""
+        cache.delete('featured_products')
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Букет"

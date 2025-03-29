@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 def index(request):
-    return render(request, 'index.html')
+    # Получаем рекомендуемые товары
+    featured_products = Product.get_featured_products()
+    
+    return render(request, 'index.html', {
+        'featured_products': featured_products
+    })
 
 
 def catalog(request):
