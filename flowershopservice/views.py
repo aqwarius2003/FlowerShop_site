@@ -10,6 +10,7 @@ from .models import ShopUser, Consultation, Order
 import uuid
 import logging
 from django.utils import timezone  # Добавляем импорт timezone
+from django.views.decorators.csrf import csrf_protect
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,7 @@ def show_consultation(request):
     return render(request, 'consultation.html')
 
 
+@csrf_protect
 @require_POST
 def consultation(request):
     name = request.POST.get('fname', '').strip()
