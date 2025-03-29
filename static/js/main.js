@@ -87,6 +87,14 @@ function handleFormSubmit(event) {
                     'success'
                 );
                 form.reset();
+                
+                // Через 2 секунды делаем редирект на каталог
+                setTimeout(() => {
+                    // Сохраняем сообщение для каталога
+                    localStorage.setItem('catalogMessage', 'Пока ожидаете звонка, ознакомьтесь с нашим каталогом');
+                    // Редирект на страницу каталога
+                    window.location.href = '/catalog/';
+                }, 2000);
             } else {
                 showMessage(data.error || 'Произошла ошибка', 'error');
             }

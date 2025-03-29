@@ -27,10 +27,26 @@
     .largeBtn {
         margin-top: 15px;
     }
+    /* Стили для уведомления */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 4px;
+        color: white;
+        font-size: 16px;
+        z-index: 1000;
+        display: none;
+        background-color: #4CAF50;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Добавляем элемент для уведомлений -->
+<div id="notification" class="notification"></div>
+
 <section id="catalog">
 	<div class="container">
 		<div class="catalog">
@@ -55,6 +71,22 @@
 <!-- JavaScript для загрузки дополнительных букетов -->
 <script>
 	$(document).ready(function() {
+        // Проверяем наличие сообщения в localStorage
+        const catalogMessage = localStorage.getItem('catalogMessage');
+        if (catalogMessage) {
+            const notification = document.getElementById('notification');
+            notification.textContent = catalogMessage;
+            notification.style.display = 'block';
+            
+            // Удаляем сообщение из localStorage
+            localStorage.removeItem('catalogMessage');
+            
+            // Скрываем уведомление через 5 секунд
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
 		// Обработчик клика на кнопку "Показать еще"
 		$('#load-more-btn').click(function() {
 			var offset = $(this).data('offset');

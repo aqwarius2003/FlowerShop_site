@@ -119,9 +119,9 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html(
                 '<span style="color: red;"><b>СРОЧНЫЙ</b></span><br>'
                 '<small>Создан: {}</small>',
-                timezone.localtime(obj.creation_date).strftime('%H:%M')
+                timezone.localtime(obj.creation_date).strftime('%H:%M') if obj.creation_date else 'Неизвестно'
             )
-        return f"{obj.delivery_time_from.strftime('%H:%M')}-{obj.delivery_time_to.strftime('%H:%M')}"
+        return f"{obj.delivery_time_from.strftime('%H:%M')}-{obj.delivery_time_to.strftime('%H:%M')}" if obj.delivery_time_from and obj.delivery_time_to else 'Неизвестно'
     get_delivery_time.short_description = "Время доставки"
     get_delivery_time.allow_tags = True
 

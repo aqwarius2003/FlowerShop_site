@@ -102,6 +102,10 @@ def card(request, bouquet_id=None):
     return render(request, 'card.html', {'bouquet': bouquet})
 
 
+def show_consultation(request):
+    return render(request, 'consultation.html')
+
+
 @require_POST
 def consultation(request):
     name = request.POST.get('fname', '').strip()
@@ -114,7 +118,6 @@ def consultation(request):
         user, created = ShopUser.objects.get_or_create(
             phone=phone,
             defaults={
-                'user_id': str(uuid.uuid4()),
                 'full_name': name,
                 'status': 'user',
             }
@@ -122,6 +125,7 @@ def consultation(request):
         Consultation.objects.create(user=user)
         return JsonResponse({
             'success': True,
+            'message': 'Спасибо за обращение! Мы свяжемся с вами в ближайшее время.',
             'user_name': name,
             'user_phone': phone,
         })
@@ -441,3 +445,7 @@ def process_order(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+
+def contacts(request):
+    return render(request, 'contacts.html')
