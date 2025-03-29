@@ -1,0 +1,17 @@
+{% extends "base.html" %}  <!-- Если есть базовый шаблон -->
+{% block content %}
+<div class="contacts-section">
+  <h1>Наши салоны</h1>
+  <div class="shops-container">
+    {% for shop in shops %}
+    <div class="shop-card">
+      <img src="{{ shop.photo.url }}" alt="{{ shop.name }}">
+      <h3>{{ shop.name }}</h3>
+      <p>📍 {{ shop.city }}, {{ shop.address }}</p>
+      <p>📞 {{ shop.phone }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <!-- Добавьте здесь карту (например, через JavaScript API) -->
+</div>
+{% endblock %}

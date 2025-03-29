@@ -1,6 +1,5 @@
 from django.urls import path
-from . import views
-
+from flowershopservice import views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -9,6 +8,7 @@ urlpatterns = [
     path('card/', views.card, name='card'),
     path('card/<int:bouquet_id>/', views.card, name='bouquet_detail'),
     path('consultation/', views.consultation, name='consultation'),
+    path("contacts/", views.contacts, name="contacts"),
     path('order/', views.order, name='order'),
     path('order-step/', views.order_step, name='order_step'),
     path('order-complete/', views.order_complete, name='order_complete'),

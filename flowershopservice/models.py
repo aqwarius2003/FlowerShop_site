@@ -257,3 +257,18 @@ class Consultation(models.Model):
 
     def __str__(self):
         return f'Консультация для {self.user.full_name} ({self.user.phone})'
+
+
+class FlowerShop(models.Model):
+    name = models.CharField("Название", max_length=100)
+    city = models.CharField("Город", max_length=50)
+    address = models.CharField("Адрес", max_length=200)
+    phone = models.CharField("Телефон", max_length=12, help_text="Формат: +7XXXXXXXXXX")
+    photo = models.ImageField("Фото салона", upload_to="shops/")
+
+    class Meta:
+        verbose_name = "Цветочный салон"
+        verbose_name_plural = "Цветочные салоны"
+
+    def __str__(self):
+        return self.name

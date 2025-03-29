@@ -11,84 +11,84 @@
 <!-- Подключаем jQuery для Ajax запросов -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <style>
-    /* Дополнительные стили для улучшения пропорций страницы каталога */
-    #catalog {
-        padding: 30px 0 60px;
-    }
-    .title {
-        margin-bottom: 25px;
-    }
-    .catalog__block {
-        margin-bottom: 20px;
-    }
-    .recommended__elems {
-        margin-bottom: 25px !important;
-    }
-    .largeBtn {
-        margin-top: 15px;
-    }
+  /* Дополнительные стили для улучшения пропорций страницы каталога */
+  #catalog {
+      padding: 30px 0 60px;
+  }
+  .title {
+      margin-bottom: 25px;
+  }
+  .catalog__block {
+      margin-bottom: 20px;
+  }
+  .recommended__elems {
+      margin-bottom: 25px !important;
+  }
+  .largeBtn {
+      margin-top: 15px;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <section id="catalog">
-	<div class="container">
-		<div class="catalog">
-			<div class="title">Все букеты</div>
-			<div class="catalog__block">
-				<!-- Контейнер для букетов -->
-				<div id="bouquets-container">
-					{% include 'bouquet_items.html' with bouquets=bouquets %}
-				</div>
-				
-				<!-- Кнопка "Показать еще" -->
-				{% if show_more_button %}
-				<button id="load-more-btn" class="btn largeBtn catalog__btn" data-offset="6">Показать ещё</button>
-				{% endif %}
-			</div>
-		</div>
-	</div>
+  <div class="container">
+    <div class="catalog">
+      <div class="title">Все букеты</div>
+      <div class="catalog__block">
+        <!-- Контейнер для букетов -->
+        <div id="bouquets-container">
+          {% include 'bouquet_items.html' with bouquets=bouquets %}
+        </div>
+
+        <!-- Кнопка "Показать еще" -->
+        {% if show_more_button %}
+        <button id="load-more-btn" class="btn largeBtn catalog__btn" data-offset="6">Показать ещё</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
 <!-- JavaScript для загрузки дополнительных букетов -->
 <script>
-	$(document).ready(function() {
-		// Обработчик клика на кнопку "Показать еще"
-		$('#load-more-btn').click(function() {
-			var offset = $(this).data('offset');
-			
-			// Отправляем Ajax запрос
-			$.ajax({
-				url: '{% url "load_more_bouquets" %}',
-				data: {
-					'offset': offset
-				},
-				success: function(data) {
-					// Добавляем новые букеты в контейнер
-					$('#bouquets-container').append(data.html);
-					
-					// Обновляем смещение для следующей загрузки
-					$('#load-more-btn').data('offset', data.next_offset);
-					
-					// Скрываем кнопку, если больше нет букетов
-					if (!data.has_more) {
-						$('#load-more-btn').hide();
-					}
+  $(document).ready(function() {
+    // Обработчик клика на кнопку "Показать еще"
+    $('#load-more-btn').click(function() {
+      var offset = $(this).data('offset');
 
-					// Плавно прокручиваем к секции консультации
-					var consultationSection = $('#consultation');
-					var consultationHeight = consultationSection.outerHeight();
-					var windowHeight = $(window).height();
-					var scrollPosition = consultationSection.offset().top - (windowHeight - consultationHeight);
-					
-					$('html, body').animate({
-						scrollTop: scrollPosition
-					}, 1000);
-				}
-			});
-		});
-	});
+      // Отправляем Ajax запрос
+      $.ajax({
+        url: '{% url "load_more_bouquets" %}',
+        data: {
+          'offset': offset
+        },
+        success: function(data) {
+          // Добавляем новые букеты в контейнер
+          $('#bouquets-container').append(data.html);
+
+          // Обновляем смещение для следующей загрузки
+          $('#load-more-btn').data('offset', data.next_offset);
+
+          // Скрываем кнопку, если больше нет букетов
+          if (!data.has_more) {
+            $('#load-more-btn').hide();
+          }
+
+          // Плавно прокручиваем к секции консультации
+          var consultationSection = $('#consultation');
+          var consultationHeight = consultationSection.outerHeight();
+          var windowHeight = $(window).height();
+          var scrollPosition = consultationSection.offset().top - (windowHeight - consultationHeight);
+
+          $('html, body').animate({
+            scrollTop: scrollPosition
+          }, 1000);
+        }
+      });
+    });
+  });
 </script>
 {% endblock %}

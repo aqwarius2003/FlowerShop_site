@@ -20,10 +20,10 @@ function initContactsToggle() {
             e.preventDefault();
             const contactsSection = document.getElementById('contacts');
             const consultationSection = document.getElementById('consultation');
-            
+
             contactsSection.classList.toggle('visible');
             consultationSection.classList.toggle('visible');
-            
+
             // Плавная прокрутка к секции контактов
             if (contactsSection.classList.contains('visible')) {
                 contactsSection.scrollIntoView({ behavior: 'smooth' });
@@ -92,30 +92,6 @@ function handleFormSubmit(event) {
             }
         })
         .catch(() => showMessage('Ошибка соединения', 'error'));
-    } else if (form.classList.contains('orderStep_form')) {
-        const formData = new FormData(form);
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage(data.message || 'Заказ успешно оформлен!', 'success');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 3000);
-            } else {
-                showMessage(data.error || 'Произошла ошибка', 'error');
-            }
-        })
-        .catch(() => showMessage('Ошибка соединения', 'error'));
-    } else {
-        form.submit();
     }
 }
 
