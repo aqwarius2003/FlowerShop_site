@@ -5,6 +5,11 @@ from django.utils.html import mark_safe
 from django.utils import timezone
 import random
 from django.core.cache import cache
+from .managers import ShopManager
+from django.utils.text import slugify
+from .utils import get_coordinates_by_address
+from django.conf import settings
+import logging
 
 
 class ShopUser(models.Model):
@@ -293,3 +298,115 @@ class Consultation(models.Model):
 
     def __str__(self):
          return f'Консультация для {self.user.full_name} ({self.user.phone})'
+    
+
+class Shop(models.Model):
+    title = models.CharField('Название', max_length=100)
+    address = models.CharField('Адрес', max_length=200)
+    phone = models.CharField('Телефон', max_length=20)
+    coord_x = models.FloatField('Координата X (широта)', null=True, blank=True)
+    coord_y = models.FloatField('Координата Y (долгота)', null=True, blank=True)
+    image = models.ImageField('Фото салона', upload_to='shops/')
+    order = models.PositiveIntegerField('Порядок', default=0)
+    is_active = models.BooleanField('Активен', default=True)
+    working_hours = models.CharField('Часы работы', max_length=100, default='10:00-20:00')
+    description = models.TextField('Описание', blank=True)
+    slug = models.SlugField('URL', unique=True)
+    meta_title = models.CharField('Meta Title', max_length=150, blank=True)
+    meta_description = models.TextField('Meta Description', blank=True)
+    last_address = models.CharField(max_length=200, editable=False, null=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Магазин'
+        verbose_name_plural = 'Магазины'
+    
+    objects = ShopManager()
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        from .utils import get_coordinates_by_address
+        logger = logging.getLogger(__name__)
+ 
+        if not self.slug:
+            self.slug = slugify(self.title)
+
+        # Проверяем, изменился ли адрес
+        logger.info(f"Сохранение магазина {self.title}")
+        logger.info(f"Текущий адрес: {self.address}")
+        logger.info(f"Предыдущий адрес: {self.last_address}")
+
+        if self.address != self.last_address:
+            logger.info(f"Адрес изменился, получаем новые координаты")
+            # Получаем координаты только если адрес изменился
+            coordinates = get_coordinates_by_address(self.address)
+            if coordinates:
+                self.coord_x, self.coord_y = coordinates
+                self.last_address = self.address
+                logger.info(f"Получены новые координаты: широта={self.coord_x}, долгота={self.coord_y}")
+            else:
+                logger.warning(f"Не удалось получить координаты для адреса: {self.address}")
+     
+        super().save(*args, **kwargs)
+        # Инвалидируем кэш при сохранении
+        cache.delete('active_shops')
+        logger.info(f"Магазин {self.title} сохранен")
+
+    def admin_image_preview(self):
+        """Метод для отображения превью в списке магазинов"""
+        if self.image:
+            return mark_safe(f'<img src="{self.image.url}" width="50" height="50" style="object-fit: cover;" />')
+        return "Нет изображения"
+    admin_image_preview.short_description = 'Фото'
+
+    def get_image_preview(self):
+        print(f"Image URL: {self.image.url if self.image else None}")  # Для отладки
+        if self.image:
+            return mark_safe(f'<img src="{self.image.url}" width="150" height="150" style="object-fit: cover;" />')
+        return 'Нет изображения'
+    get_image_preview.short_description = 'Превью изображения'
+
+    def get_map_preview(self):
+        """Метод для отображения карты в форме редактирования"""
+        if self.coord_x and self.coord_y:
+            map_id = f'map_{self.id}'
+            return mark_safe(f'''
+                <div id="{map_id}" style="width: 100%; height: 400px; margin-top: 10px;"></div>
+                <script>
+                    (function() {{
+                        var mapElement = document.getElementById("{map_id}");
+                        if (!mapElement) return;
+
+                        function initMap() {{
+                            try {{
+                                var map = new ymaps.Map(mapElement, {{
+                                    center: [{self.coord_x}, {self.coord_y}],
+                                    zoom: 16,
+                                    controls: ['zoomControl', 'fullscreenControl']
+                                }});
+
+                                var placemark = new ymaps.Placemark(
+                                    [{self.coord_x}, {self.coord_y}],
+                                    {{ balloonContent: "{self.title}" }}
+                                );
+                                map.geoObjects.add(placemark);
+                                map.container.fitToViewport();
+                            }} catch (e) {{
+                                console.error('Ошибка при инициализации карты:', e);
+                                mapElement.innerHTML = 'Ошибка загрузки карты: ' + e.message;
+                            }}
+                        }}
+
+                        if (typeof ymaps !== 'undefined') {{
+                            ymaps.ready(initMap);
+                        }} else {{
+                            console.error('API Яндекс.Карт не загружен');
+                            mapElement.innerHTML = 'Ошибка: API Яндекс.Карт не загружен';
+                        }}
+                    }})();
+                </script>
+            ''')
+        return "Координаты не указаны"
+    get_map_preview.short_description = 'Предпросмотр на карте'

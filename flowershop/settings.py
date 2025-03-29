@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'flowershopservice.context_processors.shops_context',
             ],
         },
     },
@@ -142,3 +143,7 @@ SESSION_COOKIE_NAME = 'sessionid'
 SESSION_COOKIE_AGE = 60 * 5  # 5 минут
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True
+
+# Яндекс Геокодер и Карты
+YANDEX_GEOCODER_API_KEY = env.str('YANDEX_GEOCODER_API_KEY')
+YANDEX_MAPS_API_KEY = env.str('YANDEX_MAPS_API_KEY')

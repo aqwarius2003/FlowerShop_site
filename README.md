@@ -64,3 +64,12 @@ python manage.py runserver
 - `flowershopservice/` - основное приложение
 - `static/` - статические файлы (CSS, изображения)
 - `templates/` - HTML шаблоны 
+
+
+
+
+
+Получить API ключ Яндекс.Карт:
+Зайдите на https://developer.tech.yandex.ru/
+Создайте новое приложение
+Получите API ключ для JavaScript API

@@ -1,11 +1,12 @@
 from django.contrib import admin
-from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, Order, Consultation, DeliveryManagement
+from .models import ShopUser, Category, PriceRange, Product, DeliveryTimeSlot, Order, Consultation, DeliveryManagement, Shop
 from django.utils.html import mark_safe, format_html
 from django.db import models
 from django.utils import timezone
 from django.utils.formats import date_format
 from django import forms
 from django.core.validators import RegexValidator
+from django.conf import settings
 
 @admin.register(ShopUser)
 class ShopUserAdmin(admin.ModelAdmin):
@@ -195,3 +196,120 @@ class DeliveryManagementAdmin(admin.ModelAdmin):
     list_display = ['delivery_person', 'working_date', 'shift_start', 'shift_end', 'is_available', 'current_orders_count', 'max_orders_per_day']
     list_filter = ['working_date', 'is_available', 'delivery_person']
     search_fields = ['delivery_person__full_name']
+
+@admin.register(Shop)
+class ShopAdmin(admin.ModelAdmin):
+    list_display = ('admin_image_preview', 'title', 'address', 'phone', 'working_hours', 'order', 'is_active')
+    list_editable = ('order', 'is_active')
+    search_fields = ('title', 'address')
+    list_filter = ('is_active',)
+    prepopulated_fields = {'slug': ('title',)}
+    readonly_fields = ('coord_x', 'coord_y', 'get_map_preview', 'get_image_preview')
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': (
+                'title',
+                'slug',
+                ('get_image_preview', 'image'),
+                'address',
+                ('coord_x', 'coord_y'),
+                'get_map_preview',
+                'phone',
+                'working_hours',
+                'description',
+            )
+        }),
+        ('SEO', {
+            'fields': ('meta_title', 'meta_description'),
+            'classes': ('collapse',),
+        }),
+        ('Настройки', {
+            'fields': ('order', 'is_active'),
+        }),
+    )
+    
+    def get_map_preview(self, obj):
+        if obj.coord_x and obj.coord_y:
+            return mark_safe(f'''
+                <div style="width: 100%; max-width: 800px; min-width: 400px;">
+                    <div id="map_{obj.id}" style="width: 100%; aspect-ratio: 1; margin: 10px 0; background-color: #f5f5f5; border: 1px solid #ddd;"></div>
+                </div>
+                <script>
+                    (function() {{
+                        function waitForYMaps() {{
+                            if (typeof ymaps !== 'undefined') {{
+                                ymaps.ready(function() {{
+                                    try {{
+                                        console.log('Инициализация карты для {obj.id}...');
+                                        var mapElement = document.getElementById("map_{obj.id}");
+                                        
+                                        if (!mapElement) {{
+                                            console.error('Элемент карты не найден');
+                                            return;
+                                        }}
+
+                                        var map = new ymaps.Map(mapElement, {{
+                                            center: [{obj.coord_x}, {obj.coord_y}],
+                                            zoom: 16,
+                                            controls: ['zoomControl', 'fullscreenControl']
+                                        }});
+
+                                        var placemark = new ymaps.Placemark(
+                                            [{obj.coord_x}, {obj.coord_y}],
+                                            {{ balloonContent: "{obj.title}" }},
+                                            {{ preset: 'islands#redDotIcon' }}
+                                        );
+
+                                        map.geoObjects.add(placemark);
+                                        
+                                        // Принудительно обновляем размер карты
+                                        setTimeout(function() {{
+                                            map.container.fitToViewport();
+                                        }}, 100);
+
+                                        console.log('Карта успешно создана');
+                                    }} catch (e) {{
+                                        console.error('Ошибка при создании карты:', e);
+                                        var mapElement = document.getElementById("map_{obj.id}");
+                                        if (mapElement) {{
+                                            mapElement.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Ошибка загрузки карты: ' + e.message + '</div>';
+                                        }}
+                                    }}
+                                }});
+                            }} else {{
+                                console.log('Ожидание загрузки API...');
+                                setTimeout(waitForYMaps, 100);
+                            }}
+                        }}
+
+                        if (document.readyState === 'loading') {{
+                            document.addEventListener('DOMContentLoaded', waitForYMaps);
+                        }} else {{
+                            waitForYMaps();
+                        }}
+                    }})();
+                </script>
+            ''')
+        return "Координаты не указаны"
+    get_map_preview.short_description = 'Предпросмотр на карте'
+    
+    def admin_image_preview(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" width="50" height="50" style="object-fit: cover;" />')
+        return "Нет изображения"
+    admin_image_preview.short_description = 'Фото'
+    
+    def get_image_preview(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" width="200" style="max-height: 200px; object-fit: cover;" />')
+        return "Нет изображения"
+    get_image_preview.short_description = 'Текущее фото'
+
+    class Media:
+        js = (
+            f'https://api-maps.yandex.ru/2.1/?apikey={settings.YANDEX_MAPS_API_KEY}&lang=ru_RU&load=package.full',
+        )
+        css = {
+            'all': ('admin/css/custom.css',)
+        }

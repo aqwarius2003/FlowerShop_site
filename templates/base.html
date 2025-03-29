@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/shops.css' %}">
     {% block extra_css %}{% endblock %}
     <style>
         /* Стили для управления видимостью секций */
@@ -77,32 +78,38 @@
         {% block content %}{% endblock %}
     </main>
 
-    <section id="contacts">
+    <section id="contacts" class="shops-section">
         <div class="container">
-            <div class="contacts">
-                <div class="title">Как нас найти</div>
-                <div class="contacts__elems ficb">
-                    <div class="contacts__block">
-                        <div class="contacts__block_item ficc">
-                            <div class="contacts__block_intro">ул. Пушкинская, 69</div>
-                            <a href="tel:89111744460" class="contacts__block_tel">8 (911) 17 44 460</a>
-                        </div>
-                        <div class="contacts__block_item ficc">
-                            <div class="contacts__block_intro">ул. Жукова, 13</div>
-                            <a href="tel:89112855571" class="contacts__block_tel">8 (911) 28 55 571</a>
-                        </div>
-                        <div class="contacts__block_item ficc">
-                            <div class="contacts__block_intro">ул. Красная, 384</div>
-                            <a href="tel:89113966682" class="contacts__block_tel">8 (911) 39 66 682</a>
+            <div class="title">Как нас найти</div>
+            <div class="shops-container">
+                <div class="shops-carousel">
+                    {% for shop in shops %}
+                    <div class="shop-card" data-lat="{{ shop.coord_x|stringformat:'.6f' }}" data-lng="{{ shop.coord_y|stringformat:'.6f' }}">
+                        <script>
+                            console.log("Название салона: {{ shop.title }}");
+                            console.log("Координаты: {{ shop.coord_x|stringformat:'.6f' }}, {{ shop.coord_y|stringformat:'.6f' }}");
+                        </script>
+                        <img 
+                            class="shop-image lazy" 
+                            data-src="{{ shop.image.url }}" 
+                            src="{% static 'img/placeholder.jpg' %}" 
+                            alt="{{ shop.title }}"
+                        >
+                        <div class="shop-info">
+                            <h3 class="shop-title">{{ shop.title }}</h3>
+                            <p class="shop-address">{{ shop.address }}</p>
+                            <a href="tel:{{ shop.phone }}" class="shop-phone">{{ shop.phone }}</a>
+                            <p class="shop-hours">{{ shop.working_hours }}</p>
+                            <!-- {% if shop.description %}
+                            <p class="shop-description">{{ shop.description }}</p>
+                            {% endif %} -->
                         </div>
                     </div>
-                    <img src="{% static 'img/contactsImg.jpg' %}" alt="contactsImg" class="contacts__img">
-                    <div class="contacts__map">
-                        <!-- Карта будет загружена динамически через JavaScript -->
-                    </div>
+                    {% endfor %}
                 </div>
-                <a href="{% url 'order' %}" class="btn contacts__btn">Заказать доставку</a>
+                <div id="map" class="map-container"></div>
             </div>
+            <a href="{% url 'order' %}" class="btn contacts__btn">Заказать доставку</a>
         </div>
     </section>
 
@@ -138,8 +145,16 @@
         </div>
     </footer>
 
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=d224eeac-8943-4581-923d-ff23c07771c2&lang=ru_RU" type="text/javascript"></script>
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/contacts.js' %}"></script>
+    <script src="{% static 'js/shops.js' %}"></script>
+    <script>
+        // Удаляем лишний вызов initMap и используем нашу функцию waitForYMaps
+        document.addEventListener('DOMContentLoaded', () => {
+            waitForYMaps();
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html> 
