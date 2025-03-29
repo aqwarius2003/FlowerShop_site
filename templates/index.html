@@ -12,9 +12,25 @@
     /* Дополнительные стили для улучшения пропорций на главной странице */
     #banner {
         padding-bottom: 40px;
+        position: relative;
+        overflow: hidden;
     }
     .banner {
         padding-top: 30px;
+        position: relative;
+    }
+    .banner__img {
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 1;
+        max-height: 600px; /* Ограничиваем высоту изображения */
+        object-fit: contain;
+        object-position: top right;
+    }
+    .banner__block {
+        position: relative;
+        z-index: 10;
     }
     #recommended {
         padding: 30px 0 60px;

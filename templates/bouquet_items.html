@@ -1,0 +1,23 @@
+{% load static %}
+{% for bouquet in bouquets %}
+    {% if forloop.first and forloop.counter0|divisibleby:3 or forloop.counter0|divisibleby:3 %}
+        <div class="recommended__elems">
+    {% endif %}
+    
+    <!-- Блок букета с кликабельным изображением -->
+    <div class="recommended__block bouquet-item" 
+         {% if bouquet.image %}style="background-image: url('{{ bouquet.image.url }}'); background-size: cover; background-position: center center; background-repeat: no-repeat;"{% endif %}>
+        <!-- Кликабельная ссылка на весь блок -->
+        <a href="{% url 'bouquet_detail' bouquet.id %}" class="recommended__block_img_link">
+            <!-- Информационный блок внизу изображения -->
+            <div class="recommended__block_elems ficb">
+                <span class="recommended__block_intro">{{ bouquet.name }}</span>
+                <span class="recommended__block_price">{{ bouquet.price|floatformat:0 }} руб</span>
+            </div>
+        </a>
+    </div>
+    
+    {% if forloop.last or forloop.counter|divisibleby:3 %}
+        </div>
+    {% endif %}
+{% endfor %} 

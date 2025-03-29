@@ -35,6 +35,22 @@
         body.show-consultation #consultation {
             display: block;
         }
+        
+        /* Позиционирование шапки над всеми элементами */
+        #header {
+            position: relative;
+            z-index: 100;
+        }
+        
+        /* Стиль для кнопки заказа доставки - точно как у recommended__btn */
+        .contacts__btn {
+            width: 100%;
+            display: block;
+            text-align: center;
+            border-radius: 50px;
+            margin: 30px auto 0;
+            padding: 20px;
+        }
     </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
