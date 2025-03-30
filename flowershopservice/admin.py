@@ -7,6 +7,7 @@ from django.utils.formats import date_format
 from django import forms
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.contrib import messages
 
 @admin.register(ShopUser)
 class ShopUserAdmin(admin.ModelAdmin):
@@ -250,6 +251,35 @@ class OrderAdmin(admin.ModelAdmin):
             return date_format(local_time, format='SHORT_DATETIME_FORMAT')
         return "-"
     display_creation_date.short_description = "Создан"
+
+    # Автоматически меняем статус заказа на "В доставке" при назначении доставщика
+    def save_model(self, request, obj, form, change):
+        """
+        Переопределяем метод сохранения модели, чтобы автоматически менять статус
+        заказа на "В доставке" при назначении доставщика
+        """
+        # Получаем предыдущее состояние объекта (если он существует)
+        if change and obj.pk:
+            try:
+                old_obj = self.model.objects.get(pk=obj.pk)
+                old_delivery_person = old_obj.delivery_person
+                
+                # Если доставщик был изменен или назначен
+                if obj.delivery_person and (not old_delivery_person or old_delivery_person.id != obj.delivery_person.id):
+                    # Меняем статус на "В доставке" если он не был еще установлен
+                    if obj.status != 'inDelivery':
+                        obj.status = 'inDelivery'
+                        messages.info(request, f"Статус заказа автоматически изменён на 'В доставке' при назначении доставщика.")
+                    
+            except self.model.DoesNotExist:
+                pass
+                
+        # Если это новый заказ и сразу назначается доставщик
+        elif not change and obj.delivery_person:
+            obj.status = 'inDelivery'
+        
+        # Сохраняем модель
+        super().save_model(request, obj, form, change)
 
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):

@@ -104,7 +104,8 @@ def assign_deliverer_confirm(request):
                 f"Уведомление не отправлено!"
             )
             
-        # Уведомление менеджеров (если включено)
+        # Уведомление менеджеров теперь отключено по умолчанию и отправляется
+        # только если пользователь явно выбрал опцию "notify_manager"
         if should_notify_managers:
             from .signals import send_to_managers
             

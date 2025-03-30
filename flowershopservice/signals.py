@@ -72,17 +72,12 @@ def notify_order_status_changed(sender, instance, **kwargs):
                     f"{instance.delivery_time_to.strftime('%H:%M') if instance.delivery_time_to else '-'}"
                 )
                 
-                # Отправляем уведомление доставщику
+                # Отправляем уведомление только доставщику
                 send_to_delivery_person(instance.delivery_person, message)
                 
-                # Уведомляем также менеджеров, что заказ передан в доставку
-                manager_message = (
-                    f"📋 Заказ #{instance.id} передан в доставку\n"
-                    f"Доставщик: {instance.delivery_person.full_name}\n"
-                    f"Клиент: {instance.user.full_name}\n"
-                    f"Букет: {instance.product_name}"
-                )
-                send_to_managers(manager_message)
+                # Убираем отправку уведомления менеджерам о заказе в доставке
+                # Это сообщение больше не отправляется менеджерам
+                
     except Order.DoesNotExist:
         # Заказ новый, ничего не делаем
         pass
