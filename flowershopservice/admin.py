@@ -134,6 +134,7 @@ class OrderAdmin(admin.ModelAdmin):
         'get_delivery_time',
         'status',
         'delivery_date',
+        'delivery_person',
         'display_creation_date'
     )
     list_display_links = ('get_bouquet_preview', 'product')
@@ -143,7 +144,7 @@ class OrderAdmin(admin.ModelAdmin):
         'user__phone', 
         'delivery_address'
     )
-    list_filter = ('status', 'delivery_date', 'is_express_delivery')
+    list_filter = ('status', 'delivery_date', 'is_express_delivery', 'delivery_person')
     list_editable = ('status',)
     
     # Уменьшаем высоту поля комментария
@@ -157,6 +158,64 @@ class OrderAdmin(admin.ModelAdmin):
         return "Нет фото"
     get_bouquet_preview.short_description = 'Фото'
 
+    # Добавляем действия для быстрого назначения доставщика
+    actions = ['assign_to_delivery']
+    
+    def assign_to_delivery(self, request, queryset):
+        # Получаем всех доставщиков
+        deliverers = ShopUser.objects.filter(status='delivery')
+        
+        # Если нет доставщиков, выдаем ошибку
+        if not deliverers.exists():
+            self.message_user(request, "Нет доступных доставщиков в системе!", level='ERROR')
+            return
+            
+        # Если выбрано несколько заказов
+        if queryset.count() > 1:
+            self.message_user(request, "Выберите только один заказ для назначения доставщика", level='WARNING')
+            return
+            
+        # Получаем единственный выбранный заказ
+        order = queryset.first()
+        
+        # Если заказ уже в доставке и имеет доставщика
+        if order.status == 'inDelivery' and order.delivery_person:
+            self.message_user(request, 
+                f"Заказ уже в доставке и назначен на {order.delivery_person.full_name}", 
+                level='WARNING')
+            return
+            
+        # Формируем HTML для выпадающего списка
+        select_html = '<select name="deliverer" required style="margin: 10px 0;">'
+        select_html += '<option value="">-- Выберите доставщика --</option>'
+        
+        for deliverer in deliverers:
+            has_telegram = 'да' if deliverer.telegram_id else 'нет'
+            select_html += f'<option value="{deliverer.id}">{deliverer.full_name} (TG: {has_telegram})</option>'
+            
+        select_html += '</select>'
+        
+        # Создаем форму выбора доставщика
+        from django.http import HttpResponse
+        from django.template.response import TemplateResponse
+        
+        context = {
+            'title': f'Назначить доставщика для заказа #{order.id}',
+            'select_html': select_html,
+            'orders': queryset,
+            'opts': self.model._meta,
+            'app_label': self.model._meta.app_label,
+            'order_id': order.id,
+            'action_checkbox_name': admin.helpers.ACTION_CHECKBOX_NAME,
+        }
+        
+        # Рендерим шаблон с формой
+        return TemplateResponse(request, 
+                                'admin/assign_deliverer.html', 
+                                context)
+    
+    assign_to_delivery.short_description = "Назначить доставщика и отправить в доставку"
+
     # Настройка полей формы
     fieldsets = (
         ('Основная информация', {
@@ -164,7 +223,7 @@ class OrderAdmin(admin.ModelAdmin):
         }),
         ('Информация о доставке', {
             'fields': ('delivery_date', 'delivery_address', 'is_express_delivery', 
-                      'delivery_time_from', 'delivery_time_to'),
+                      'delivery_time_from', 'delivery_time_to', 'delivery_person'),
         }),
         ('Комментарии', {
             'fields': ('comment', 'delivery_comments'),
@@ -173,7 +232,13 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     # Делаем поле creation_date только для чтения
-    readonly_fields = ('creation_date',)
+    readonly_fields = ('creation_date', 'user')
+    
+    # Фильтруем список доставщиков - показываем только пользователей со статусом 'delivery'
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "delivery_person":
+            kwargs["queryset"] = ShopUser.objects.filter(status='delivery')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     # Метод для форматирования времени создания с учетом часового пояса
     def display_creation_date(self, obj):

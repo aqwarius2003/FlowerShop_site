@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h1>{{ title }}</h1>
+    
+    <p style="margin: 20px 0; color: #666;">
+        Выберите доставщика из списка. Статус заказа будет автоматически изменён на "В доставке", а доставщику будет отправлено уведомление в Telegram.
+    </p>
+
+    <form action="{% url 'assign_deliverer_confirm' %}" method="post">
+        {% csrf_token %}
+        
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        
+        {% for obj in orders %}
+            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}">
+        {% endfor %}
+        
+        <div style="margin: 20px 0;">
+            <div>
+                <label for="deliverer" style="display: block; margin-bottom: 5px; font-weight: bold;">Доставщик:</label>
+                {{ select_html|safe }}
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <input type="checkbox" id="notify_manager" name="notify_manager" checked>
+                <label for="notify_manager">Уведомить менеджеров</label>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <input type="submit" value="Подтвердить" style="padding: 8px 15px; background: #417690; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+            <a href="{% url 'admin:flowershopservice_order_changelist' %}" style="padding: 8px 15px; background: #999; color: white; text-decoration: none; border-radius: 4px;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %} 
