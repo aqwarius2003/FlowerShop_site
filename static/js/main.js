@@ -151,24 +151,64 @@ function validateForm(form) {
             if (!nameRegex.test(field.value.trim())) {
                 isValid = false;
                 field.classList.add('error');
+                showValidationError(field, 'Имя должно содержать только русские буквы');
             } else {
                 field.classList.remove('error');
+                removeValidationError(field);
             }
         }
 
-        // Проверка для поля телефона: должно содержать только цифры и знак "+"
+        // Проверка для поля телефона: должно соответствовать российскому формату
         if (field.name === 'tel') {
-            const phoneRegex = /^[+]?[0-9\s()-]*$/; // разрешает только цифры и знаки
-            if (!phoneRegex.test(field.value.trim())) {
+            // Очищаем телефон от символов форматирования для проверки
+            const cleanedPhone = field.value.replace(/[^\d+]/g, '');
+            
+            // Проверяем основные форматы: +7XXXXXXXXXX, 8XXXXXXXXXX, 7XXXXXXXXXX
+            let isValidPhone = false;
+            
+            if (cleanedPhone.startsWith('+7') && cleanedPhone.length === 12) {
+                isValidPhone = true;
+            } else if (cleanedPhone.startsWith('8') && cleanedPhone.length === 11) {
+                isValidPhone = true;
+            } else if (cleanedPhone.startsWith('7') && cleanedPhone.length === 11) {
+                isValidPhone = true;
+            }
+            
+            if (!isValidPhone) {
                 isValid = false;
                 field.classList.add('error');
+                showValidationError(field, 'Введите номер в формате +7XXXXXXXXXX или 8XXXXXXXXXX');
             } else {
                 field.classList.remove('error');
+                removeValidationError(field);
             }
         }
     });
 
     return isValid;
+}
+
+// Показать ошибку валидации под полем
+function showValidationError(field, message) {
+    // Сначала удаляем существующие сообщения
+    removeValidationError(field);
+    
+    // Создаем элемент с сообщением об ошибке
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'validation-error';
+    errorMessage.style.color = 'red';
+    errorMessage.style.fontSize = '12px';
+    errorMessage.style.marginTop = '5px';
+    errorMessage.textContent = message;
+    
+    // Вставляем сообщение после поля
+    field.parentNode.insertBefore(errorMessage, field.nextSibling);
+}
+
+// Удалить ошибку валидации
+function removeValidationError(field) {
+    const errors = field.parentNode.querySelectorAll('.validation-error');
+    errors.forEach(error => error.remove());
 }
 
 /**

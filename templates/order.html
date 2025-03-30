@@ -28,6 +28,16 @@
     .order__form_line {
         margin: 20px 0;
     }
+    /* Стили для уведомления об ошибке */
+    .error-message {
+        color: #f44336;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #ffebee;
+        border-radius: 4px;
+        font-size: 14px;
+    }
 </style>
 {% endblock %}
 
@@ -38,6 +48,11 @@
 			<div class="order__block">
 				<div class="order_items">
 					<div class="title">Оформление доставки</div>
+                    
+                    {% if error_message %}
+                    <div class="error-message">{{ error_message }}</div>
+                    {% endif %}
+                    
 					<form method="POST" action="{% url 'order_step' %}" class="order__form">
 						{% csrf_token %}
 						<div class="order__form_block ficb">

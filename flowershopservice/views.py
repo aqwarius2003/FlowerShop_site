@@ -11,6 +11,7 @@ import uuid
 import logging
 from django.utils import timezone  # Добавляем импорт timezone
 from django.views.decorators.csrf import csrf_protect
+from .utils import validate_russian_phone
 
 logger = logging.getLogger(__name__)
 
@@ -121,22 +122,36 @@ def consultation(request):
     if not name or not phone:
         return JsonResponse({'success': False, 'error': 'Заполните все поля'})
 
+    # Валидируем и форматируем номер телефона
+    is_valid, result = validate_russian_phone(phone)
+    if not is_valid:
+        return JsonResponse({'success': False, 'error': result})
+    
+    formatted_phone = result
+    logger.info(f"Processed phone number: {formatted_phone}")
+
     try:
         user, created = ShopUser.objects.get_or_create(
-            phone=phone,
+            phone=formatted_phone,
             defaults={
                 'full_name': name,
                 'status': 'user',
             }
         )
-        Consultation.objects.create(user=user)
+        logger.info(f"User created/found: {user.full_name}, {user.phone}, Created: {created}")
+        
+        # Создаем запись о консультации
+        consultation = Consultation.objects.create(user=user)
+        logger.info(f"Consultation created: {consultation.id}")
+        
         return JsonResponse({
             'success': True,
             'message': 'Спасибо за обращение! Мы свяжемся с вами в ближайшее время.',
             'user_name': name,
-            'user_phone': phone,
+            'user_phone': formatted_phone,
         })
     except Exception as e:
+        logger.error(f"Error creating consultation: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)})
 
 
@@ -220,6 +235,19 @@ def order_step(request):
         # Логирование для отладки
         logger.info(f"Order form data: name={name}, phone={phone}, address={address}, time={order_time}")
 
+        # Валидируем номер телефона
+        is_valid, result = validate_russian_phone(phone)
+        if not is_valid:
+            # Если номер не валиден, возвращаем ошибку
+            # В реальном приложении нужен бы редирект обратно на форму с сообщением
+            logger.error(f"Invalid phone number: {phone}, error: {result}")
+            return render(request, 'order.html', {
+                'error_message': result
+            })
+        
+        formatted_phone = result
+        logger.info(f"Processed phone number: {formatted_phone}")
+
         # Обрабатываем выбранный слот доставки
         delivery_date = datetime.date.today()
         is_express = False
@@ -270,7 +298,7 @@ def order_step(request):
         # Сохраняем информацию в сессии для последующего создания заказа
         request.session['order_data'] = {
             'name': name,
-            'phone': phone,
+            'phone': formatted_phone,  # Используем отформатированный номер
             'address': address,
             'delivery_date': delivery_date.isoformat(),
             'is_express': is_express,
@@ -399,11 +427,23 @@ def process_order(request):
             bouquet = Product.objects.get(id=bouquet_data['id'])
             logger.info(f"Found product: {bouquet.name}, ID: {bouquet.id}")
             
+            # Проверяем, что номер телефона в правильном формате
+            phone = order_data.get('phone', '')
+            if not phone.startswith('+'):
+                # Дополнительная проверка, если по какой-то причине номер не был форматирован
+                is_valid, result = validate_russian_phone(phone)
+                if is_valid:
+                    phone = result
+                else:
+                    logger.error(f"Invalid phone: {phone}")
+                    return JsonResponse({'success': False, 'error': result})
+                    
+            logger.info(f"Using phone: {phone}")
+            
             # Создаем или получаем пользователя
             user, created = ShopUser.objects.get_or_create(
-                phone=order_data['phone'],
+                phone=phone,
                 defaults={
-                    # Удаляем поле user_id, так как его нет в модели
                     'full_name': order_data['name'],
                     'status': 'user',
                     'address': order_data['address']
