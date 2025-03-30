@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
-from datetime import datetime
 from environs import Env
 
 env = Env()
@@ -42,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'flowershopservice',
+    'flowershopservice.apps.FlowershopserviceConfig',
 ]
 
 MIDDLEWARE = [
@@ -147,3 +146,27 @@ SESSION_COOKIE_SECURE = True
 # Яндекс Геокодер и Карты
 YANDEX_GEOCODER_API_KEY = env.str('YANDEX_GEOCODER_API_KEY')
 YANDEX_MAPS_API_KEY = env.str('YANDEX_MAPS_API_KEY')
+
+TELEGRAM_BOT_TOKEN = env.str('TELEGRAM_BOT_TOKEN', default=None)  # Токен бота
+TELEGRAM_CHAT_ID = env.str('TELEGRAM_CHAT_ID', default=None)      # ID канала
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'flowershopservice': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
