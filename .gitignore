@@ -150,7 +150,3 @@ cython_debug/
 .vscode/
 *.swp
 *.swo
-
-raw_base/
-fill_database.py
-fill_database.zip

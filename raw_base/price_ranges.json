@@ -1,0 +1,9 @@
+[
+  {"min_price": null, "max_price": null},
+  {"min_price": 3501.00, "max_price": 5000.00},
+  {"min_price": 3001.00, "max_price": 3500.00},
+  {"min_price": 2001.00, "max_price": 3000.00},
+  {"min_price": 1501.00, "max_price": 2000.00},
+  {"min_price": 1001.00, "max_price": 1500.00},
+  {"min_price": 0, "max_price": 1000.00}
+]
