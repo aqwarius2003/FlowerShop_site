@@ -1,158 +1,128 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Flower Shop</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Unbounded:wght@700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{% static 'css/main.css' %}">	
-	<style>
-		/* Дополнительные стили для улучшения пропорций на странице консультации */
-		#singUpConsultation {
-			padding: 30px 0 60px;
-		}
-		.singUpConsultation {
-			padding: 30px 0;
-		}
-		.title {
-			margin-bottom: 25px;
-		}
-		.order__form_input {
-			margin-bottom: 15px;
-		}
-		.chekbox {
-			margin-bottom: 20px;
-		}
-		.singUpConsultation__form {
-			padding: 20px;
-		}
-        /* Стили для уведомления */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 4px;
-            color: white;
-            font-size: 16px;
-            z-index: 1000;
-            display: none;
-        }
-        .notification.success {
-            background-color: #4CAF50;
-        }
-        .notification.error {
-            background-color: #f44336;
-        }
-	</style>
-</head>
-<body>
-    <!-- Добавляем элемент для уведомлений -->
-    <div id="notification" class="notification"></div>
 
-	<header id="header">
-		<div class="container">
-			<div class="header ficb">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo"></a>
-				<nav>
-					<ul class="menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-			</div>
-		</div>
-	</header>
-	<section id="singUpConsultation">
-		<div class="container">
-			<div class="singUpConsultation">
-				<form id="consultationForm" action="{% url 'consultation' %}" method="post" class="singUpConsultation__form">
-					{% csrf_token %}
-					<div class="title">Запись на консультацию</div>		
-					<input type="text" name="fname" class="order__form_input" placeholder="Введите Имя" required>
-					<input type="text" name="tel" class="order__form_input" placeholder="+ 7 (999) 000 00 00" required>
-					<div class="chekbox fic">
-						<input type="checkbox" class="singUpConsultation__ckekbox" checked required>
-						<span class="chekbox__intro">Я согласен(а) с политикой конфиденциальности</span>
-					</div>
-					<button type="submit" class="btn singUpConsultation__form_btn">Отправить</button>	
-				</form>
-				<div class="blockImgHiden"></div>
-			</div>
-		</div>
-		<img src="{% static 'img/singUpConsultationImg.jpg' %}" alt="singUpConsultationImg" class="singUpConsultation__img">
-	</section>
-	<footer id="footer">
-		<div class="container">
-			<div class="footer">
-				<a href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" alt="logo" class="logo footer__logo"></a>
-				<nav>
-					<ul class="menu footer__menu ficc">
-						<li class="menu__item"><a href="{% url 'catalog' %}" class="menu__item_link">Каталог</a></li>
-						<li class="menu__item"><a href="{% url 'result' %}" class="menu__item_link">Рекомендации</a></li>
-						<li class="menu__item"><a href="#contacts" class="menu__item_link">Контакты</a></li>
-					</ul>
-				</nav>
-				<hr class="line"></hr>
-				<a href="{% url 'privacy' %}" class="footer__poli">Политика конфиденциальности</a>
-				<p class="footer_cop">©️2022. FlowerShop. Все права защищены</p>
-			</div>
-		</div>
-	</footer>
+{% block title %}Flower Shop - Консультация{% endblock %}
 
-    <script>
-        document.getElementById('consultationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const notification = document.getElementById('notification');
-                notification.textContent = data.message || data.error;
-                notification.className = 'notification ' + (data.success ? 'success' : 'error');
-                notification.style.display = 'block';
-                
-                if (data.success) {
-                    // Очищаем форму при успешной отправке
-                    this.reset();
-                    
-                    // Через 2 секунды (чтобы пользователь успел прочитать первое уведомление)
-                    setTimeout(() => {
-                        // Сохраняем сообщение для каталога в localStorage
-                        localStorage.setItem('catalogMessage', 'Пока ожидаете звонка, ознакомьтесь с нашим каталогом');
-                        // Редирект на страницу каталога
-                        window.location.href = "{% url 'catalog' %}";
-                    }, 2000);
-                }
-                
-                // Скрываем уведомление через 3 секунды только если не было успеха
-                if (!data.success) {
-                    setTimeout(() => {
-                        notification.style.display = 'none';
-                    }, 3000);
-                }
-            })
-            .catch(error => {
-                const notification = document.getElementById('notification');
-                notification.textContent = 'Произошла ошибка при отправке формы';
-                notification.className = 'notification error';
-                notification.style.display = 'block';
-                
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
-            });
-        });
-    </script>
-</body>
-</html>
+{% block body_class %}show-consultation{% endblock %}
+
+{% block extra_css %}
+<style>
+	/* Дополнительные стили для улучшения пропорций на странице консультации */
+	#singUpConsultation {
+		padding: 30px 0 60px;
+	}
+	.singUpConsultation {
+		padding: 30px 0;
+	}
+	.title {
+		margin-bottom: 25px;
+	}
+	.order__form_input {
+		margin-bottom: 15px;
+	}
+	.chekbox {
+		margin-bottom: 20px;
+	}
+	.singUpConsultation__form {
+		padding: 20px;
+	}
+	/* Стили для уведомления */
+	.notification {
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		padding: 15px 25px;
+		border-radius: 4px;
+		color: white;
+		font-size: 16px;
+		z-index: 1000;
+		display: none;
+	}
+	.notification.success {
+		background-color: #4CAF50;
+	}
+	.notification.error {
+		background-color: #f44336;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Добавляем элемент для уведомлений -->
+<div id="notification" class="notification"></div>
+
+<section id="singUpConsultation">
+	<div class="container">
+		<div class="singUpConsultation">
+			<form id="consultationForm" action="{% url 'consultation' %}" method="post" class="singUpConsultation__form">
+				{% csrf_token %}
+				<div class="title">Запись на консультацию</div>		
+				<input type="text" name="fname" class="order__form_input" placeholder="Введите Имя" required>
+				<input type="text" name="tel" class="order__form_input" placeholder="+ 7 (999) 000 00 00" required>
+				<div class="chekbox fic">
+					<input type="checkbox" class="singUpConsultation__ckekbox" checked required>
+					<span class="chekbox__intro">Я согласен(а) с политикой конфиденциальности</span>
+				</div>
+				<button type="submit" class="btn singUpConsultation__form_btn">Отправить</button>	
+			</form>
+			<div class="blockImgHiden"></div>
+		</div>
+	</div>
+	<img src="{% static 'img/singUpConsultationImg.jpg' %}" alt="singUpConsultationImg" class="singUpConsultation__img">
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+	document.getElementById('consultationForm').addEventListener('submit', function(e) {
+		e.preventDefault();
+		
+		const formData = new FormData(this);
+		
+		fetch(this.action, {
+			method: 'POST',
+			body: formData,
+			headers: {
+				'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			const notification = document.getElementById('notification');
+			notification.textContent = data.message || data.error;
+			notification.className = 'notification ' + (data.success ? 'success' : 'error');
+			notification.style.display = 'block';
+			
+			if (data.success) {
+				// Очищаем форму при успешной отправке
+				this.reset();
+				
+				// Через 2 секунды (чтобы пользователь успел прочитать первое уведомление)
+				setTimeout(() => {
+					// Сохраняем сообщение для каталога в localStorage
+					localStorage.setItem('catalogMessage', 'Пока ожидаете звонка, ознакомьтесь с нашим каталогом');
+					// Редирект на страницу каталога
+					window.location.href = "{% url 'catalog' %}";
+				}, 2000);
+			}
+			
+			// Скрываем уведомление через 3 секунды только если не было успеха
+			if (!data.success) {
+				setTimeout(() => {
+					notification.style.display = 'none';
+				}, 3000);
+			}
+		})
+		.catch(error => {
+			const notification = document.getElementById('notification');
+			notification.textContent = 'Произошла ошибка при отправке формы';
+			notification.className = 'notification error';
+			notification.style.display = 'block';
+			
+			setTimeout(() => {
+				notification.style.display = 'none';
+			}, 3000);
+		});
+	});
+</script>
+{% endblock %}
