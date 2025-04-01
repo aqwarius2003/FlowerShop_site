@@ -281,16 +281,34 @@ class OrderAdmin(admin.ModelAdmin):
         # Сохраняем модель
         super().save_model(request, obj, form, change)
 
+
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'creation_date', 'processed']
+    list_display = ['user', 'get_phone', 'creation_date', 'status_display', 'processed']
     list_filter = ['processed', 'creation_date']
+    ordering = ['creation_date']  # Сортировка от старых к новым
+
+    def get_phone(self, obj):
+        return obj.user.phone
+    get_phone.short_description = 'Телефон'
+
+    def status_display(self, obj):
+        if obj.processed:
+            return 'Обработано'
+        now = timezone.now()
+        delta = now - obj.creation_date
+        if delta.total_seconds() > 20 * 60:  # Проверка на 20 минут
+            return 'Просрочено'
+        return 'Не обработано'
+    status_display.short_description = 'Статус заявки'
+
 
 @admin.register(DeliveryManagement)
 class DeliveryManagementAdmin(admin.ModelAdmin):
     list_display = ['delivery_person', 'working_date', 'shift_start', 'shift_end', 'is_available', 'current_orders_count', 'max_orders_per_day']
     list_filter = ['working_date', 'is_available', 'delivery_person']
     search_fields = ['delivery_person__full_name']
+
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
